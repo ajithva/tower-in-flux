@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tower in Flux</title>
+<meta name="description" content="A cellular-automaton tower game: grow a tower to the target height and keep it standing as the wind picks up.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%231b1d21%27/%3E%3Crect x=%275%27 y=%272%27 width=%276%27 height=%2712%27 fill=%27%2319e3f0%27/%3E%3Crect x=%272%27 y=%2711%27 width=%273%27 height=%273%27 fill=%27%23ffb300%27/%3E%3Crect x=%2711%27 y=%2711%27 width=%273%27 height=%273%27 fill=%27%2339e639%27/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1b1d21;
+    --panel: #15171a;
+    --card: #202328;
+    --ink: #e8eaed;
+    --muted: #9aa0a8;
+    --line: #2d3137;
+    --tower: #19e3f0;
+    --falling: #ffb300;
+    --rubble: #39e639;
+    --danger: #ff5a4f;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 14px; }
+  .app { display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
+  aside { background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; padding: 20px 20px 32px; }
+  main { position: relative; min-width: 0; overflow: hidden; }
+  #view { position: absolute; inset: 0; }
+  .title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+  h1 b { color: var(--tower); font-weight: 700; }
+  .sub { color: var(--muted); margin: 0 0 18px; line-height: 1.45; font-size: 13px; }
+  .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  button { font: inherit; font-weight: 500; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); cursor: pointer; transition: background .15s, border-color .15s, transform .05s; }
+  button:hover:not(:disabled) { border-color: var(--muted); }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button:disabled { opacity: .35; cursor: not-allowed; }
+  button.primary { background: var(--tower); color: #0b1a1c; border-color: var(--tower); font-weight: 600; }
+  button.primary:hover { background: #5cf0f8; }
+  button.icon { width: 34px; height: 34px; padding: 0; border-radius: 50%; font-weight: 600; flex: none; }
+  section { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 16px; }
+  section h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  .row { margin-bottom: 12px; }
+  .row label { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .row output { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--muted); }
+  input[type=range] { width: 100%; accent-color: var(--tower); height: 18px; margin: 0; }
+  .toggle { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; cursor: pointer; gap: 10px; }
+  .toggle small { display: block; color: var(--muted); font-size: 12px; }
+  .toggle input { width: 18px; height: 18px; accent-color: var(--tower); flex: none; }
+  .hint { font-size: 12px; color: var(--muted); line-height: 1.45; margin: 4px 0 0; }
+
+  /* HUD */
+  .glass { background: rgba(21,23,26,.82); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(6px); }
+  .hud { position: absolute; top: 16px; left: 16px; padding: 10px 14px; font-family: "IBM Plex Mono", monospace;
+    font-size: 12px; line-height: 1.7; pointer-events: none; color: var(--muted); }
+  .hud .phase { font-family: "IBM Plex Sans", sans-serif; font-weight: 600; font-size: 13px; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .topright { position: absolute; top: 16px; right: 16px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+  .score { padding: 12px 14px; width: 230px; pointer-events: none; }
+  .score .big { font-family: "IBM Plex Mono", monospace; font-size: 30px; font-weight: 600; line-height: 1; color: var(--ink); }
+  .score .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .score .best { font-size: 12px; color: var(--muted); font-family: "IBM Plex Mono", monospace; margin-top: 2px; }
+  .meter { margin-top: 10px; }
+  .meter .top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  .meter .top span:last-child { font-family: "IBM Plex Mono", monospace; color: var(--muted); }
+  .bar { position: relative; height: 8px; border-radius: 4px; background: #2a2e34; overflow: hidden; }
+  .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; transition: width .25s; }
+  #heightBar { background: var(--tower); }
+  #heightBar.done { background: var(--rubble); }
+  #windBar { background: linear-gradient(90deg, var(--falling), var(--danger)); }
+  .toast { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(.9); padding: 14px 22px; border-radius: 12px;
+    font-weight: 700; font-size: 22px; letter-spacing: .02em; pointer-events: none; opacity: 0; transition: opacity .25s, transform .25s; text-align: center; }
+  .toast small { display: block; font-size: 13px; font-weight: 500; opacity: .85; margin-top: 2px; }
+  .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .toast.gust { background: rgba(255,179,0,.14); border: 1px solid var(--falling); color: var(--falling); }
+  .toast.win { background: rgba(57,230,57,.14); border: 1px solid var(--rubble); color: var(--rubble); }
+  .legend { position: absolute; bottom: 16px; left: 16px; display: flex; gap: 14px; font-size: 12px; color: var(--muted);
+    padding: 8px 12px; pointer-events: none; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+  .orbit-hint { position: absolute; bottom: 16px; right: 16px; font-size: 12px; color: var(--muted); pointer-events: none; }
+
+  /* Modals */
+  .modal { position: fixed; inset: 0; background: rgba(5,6,8,.72); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  .modal.open { display: flex; }
+  .sheet { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; max-width: 620px; width: 100%; max-height: 90vh;
+    overflow-y: auto; padding: 28px; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+  .sheet h2 { font-size: 24px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .sheet h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 22px 0 8px; }
+  .sheet p, .sheet li { line-height: 1.55; color: #c9cdd3; }
+  .sheet p { margin: 0 0 10px; }
+  .sheet ol, .sheet ul { padding-left: 20px; margin: 0 0 10px; }
+  .sheet li { margin-bottom: 6px; }
+  .sheet b { color: var(--ink); }
+  .sheet .c-t { color: var(--tower); } .sheet .c-f { color: var(--falling); } .sheet .c-r { color: var(--rubble); }
+  .sheet .actions { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+  .sheet .actions button { padding: 11px 20px; }
+  .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--tower); font-weight: 600; margin-bottom: 8px; }
+  .steps { display: grid; gap: 10px; margin: 16px 0 4px; }
+  .step { display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: start; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  .step .n { width: 30px; height: 30px; border-radius: 50%; background: #0f2a2d; color: var(--tower); display: grid; place-items: center; font-weight: 700; font-family: "IBM Plex Mono", monospace; }
+  .step p { margin: 0; }
+  .rules { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; color: #c9cdd3; line-height: 1.7; margin-bottom: 10px; }
+
+  @media (max-width: 760px) {
+    .app { grid-template-columns: 1fr; grid-template-rows: 62vh auto; height: auto; }
+    main { order: -1; height: 62vh; }
+    aside { border-right: 0; border-top: 1px solid var(--line); padding: 16px; }
+    .orbit-hint { display: none; }
+    .score { width: 170px; padding: 10px 12px; }
+    .score .big { font-size: 22px; }
+    .hud { font-size: 11px; padding: 8px 10px; top: auto; bottom: 12px; left: 12px; }
+    .topright { top: 12px; right: 12px; }
+    .legend { display: none; }
+    .sheet { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="title-row">
+      <h1>Tower <b>in Flux</b></h1>
+      <button class="icon" id="btnHelp" title="Help" aria-label="Help">?</button>
+    </div>
+    <p class="sub">Grow a tower from a few seed blocks and get it to the target height. Then keep it standing while the wind picks up.</p>
+
+    <div class="btns">
+      <button id="btnStart" class="primary">New game</button>
+      <button id="btnRestart">Reset</button>
+      <button id="btnClear">Clear rubble</button>
+      <button id="btnSeed">Random seed</button>
+    </div>
+    <p class="hint">Pick the grid and rules, then press New game. The wind starts once the tower settles.</p>
+
+    <section id="secChallenge"><h2>Challenge</h2></section>
+    <section id="secContinue"><h2>Keep building</h2>
+      <p class="hint" style="margin:0 0 10px">While the wind is blowing, add more levels on top. The starting level jumps to the top of the tower each time it settles.</p>
+    </section>
+    <section id="secSetup"><h2>Grid</h2></section>
+    <section id="secRules"><h2>Growth rules</h2></section>
+    <section id="secEnv"><h2>Wind &amp; rubble</h2></section>
+    <section id="secDisplay"><h2>Display</h2></section>
+  </aside>
+
+  <main>
+    <div id="view"></div>
+    <div class="hud glass">
+      <div class="phase"><span class="dot" id="hudDot"></span><span id="hudPhase">Idle</span></div>
+      <div id="hudLevel">press New game</div>
+      <div id="hudCounts">tower 0 · falling 0 · rubble 0</div>
+    </div>
+    <div class="topright">
+      <div class="score glass">
+        <div class="lbl">Score</div>
+        <div class="big" id="scoreVal">0</div>
+        <div class="best" id="bestVal">best 0</div>
+        <div class="meter">
+          <div class="top"><span>Height</span><span id="heightTxt">0 / 36</span></div>
+          <div class="bar"><i id="heightBar" style="width:0%"></i></div>
+        </div>
+        <div class="meter">
+          <div class="top"><span>Wind</span><span id="windTxt">×1.00</span></div>
+          <div class="bar"><i id="windBar" style="width:0%"></i></div>
+        </div>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <div class="legend glass">
+      <span style="--c: var(--tower)">Tower</span>
+      <span style="--c: var(--falling)">Falling</span>
+      <span style="--c: var(--rubble)">Rubble</span>
+    </div>
+    <div class="orbit-hint">Drag to orbit · scroll to zoom · right-drag to pan</div>
+  </main>
+</div>
+
+<!-- Intro -->
+<div class="modal open" id="intro" role="dialog" aria-modal="true" aria-labelledby="introTitle">
+  <div class="sheet">
+    <div class="kicker">A cellular automaton game</div>
+    <h2 id="introTitle">Tower in Flux</h2>
+    <p>The tower here isn't designed. It grows from simple local rules: each new block appears or doesn't depending on how many neighbours it has on the level below. Blocks with nothing under them fall, pile up as rubble, and can become ground for more building. Once the tower settles, the wind starts, and it gets stronger in random gusts.</p>
+    <p><b>Your goal:</b> get the tower up to the <b class="c-t">target height</b>, then keep it standing for as long as you can.</p>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><p><b>Tune the rules.</b> Choose the grid size, seed, density and growth rules. They decide how solid or lacy the tower comes out.</p></div>
+      <div class="step"><div class="n">2</div><p><b>Press New game.</b> The tower grows level by level, then anything unsupported <span class="c-f">falls</span> and lands as <span class="c-r">rubble</span>.</p></div>
+      <div class="step"><div class="n">3</div><p><b>Keep building.</b> While the wind is blowing, press <b>Continue growing</b> to add more levels on top, until you pass the target.</p></div>
+      <div class="step"><div class="n">4</div><p><b>Survive the gusts.</b> You score points for every moment the wind blows, and taller towers earn more. Reaching the target gives a big bonus.</p></div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="introPlay">Play</button>
+      <button id="introHelp">How it works</button>
+    </div>
+  </div>
+</div>
+
+<!-- Help -->
+<div class="modal" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="sheet">
+    <div class="kicker">Help</div>
+    <h2 id="helpTitle">How Tower in Flux works</h2>
+
+    <h3>The idea</h3>
+    <p>Tower in Flux is a 3D cellular automaton that started as a Grasshopper script. Instead of drawing a tower, you set a few local rules and watch a form grow out of them. Then gravity and wind test how well it holds together.</p>
+
+    <h3>How a level grows</h3>
+    <p>Level 0 is scattered randomly (controlled by <b>Density</b> and <b>Seed</b>), and the centre block is always filled. Each new level looks at the 8 cells around each position on the level below, counting both tower blocks and rubble:</p>
+    <div class="rules">
+      neighbours between Birth min and Birth max → block is born<br>
+      block directly below and neighbours ≥ Survive min → block survives<br>
+      otherwise → empty
+    </div>
+    <p>With <b>Pure birth</b> on, only the birth rule applies, which gives sparser, more fragile towers.</p>
+
+    <h3>The three phases</h3>
+    <ul>
+      <li><b class="c-t">Growing:</b> the tower is built one level at a time.</li>
+      <li><b class="c-f">Collapsing:</b> any block with nothing under it falls, unless it's held on both sides. Falling blocks drift outward and land as <span class="c-r">rubble</span>, which piles a few blocks high.</li>
+      <li><b>Wind:</b> the upper part of the tower (from 70% of the level count up) sways. Blocks with fewer neighbours sway more, and if one sways too far it breaks off and falls.</li>
+    </ul>
+
+    <h3>Gusts</h3>
+    <p>While the wind blows, it picks up in random gusts every few seconds, each adding 10–40% more strength, up to ×4. Tall, thin and exposed blocks go first. Only New game or Reset brings the wind back down.</p>
+
+    <h3>Scoring</h3>
+    <ul>
+      <li>Every tick the wind is blowing, you earn points equal to the tower's current height.</li>
+      <li>The first time the settled tower reaches the <b>target height</b>, you get a bonus of target × 100.</li>
+      <li>Turning on <b>Stop wind</b> pauses the gusts and the scoring, so it isn't a free pass.</li>
+      <li>Your best score is saved in this browser.</li>
+    </ul>
+
+    <h3>Tips</h3>
+    <ul>
+      <li>Wide, dense footprints (a high Density with Birth min around 3) stand up to wind much better than thin ones.</li>
+      <li><b>Continue growing</b> only works during the Wind phase. It reseeds the chosen level and adds <b>Levels</b> more on top.</li>
+      <li>With <b>Build on rubble</b> on, the tower can spread onto the rubble around its base and brace itself.</li>
+      <li><b>Clear rubble</b> takes away that support, and anything resting on it falls.</li>
+    </ul>
+
+    <h3>Controls</h3>
+    <p>Drag to orbit, scroll or pinch to zoom, and right-drag to pan. The <b>Speed</b> slider changes how fast the simulation runs.</p>
+
+    <div class="actions">
+      <button class="primary" id="helpClose">Got it</button>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+// ===SIM START===
+// Port of the Grasshopper C# script. Integer grid, keys packed into numbers.
+const OFF = 4096, S = 8192;
+function K(x, y, z) { return ((x + OFF) * S + (y + OFF)) * S + (z + OFF); }
+function KX(k) { return Math.floor(k / (S * S)) - OFF; }
+function KY(k) { return (Math.floor(k / S) % S) - OFF; }
+function KZ(k) { return (k % S) - OFF; }
+
+// Seeded random (stands in for System.Random)
+function makeRandom(seed) {
+  let a = (seed >>> 0) ^ 0x9E3779B9;
+  const nextDouble = () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  return {
+    nextDouble,
+    next(n) { return Math.floor(nextDouble() * n); },            // Random.Next(n)
+    range(min, max) { return min + Math.floor(nextDouble() * (max - min)); } // Random.Next(min,max)
+  };
+}
+
+// Ordered list of positions with fast Contains (List<(int,int,int)>)
+class PosList {
+  constructor() { this.arr = []; this.counts = new Map(); }
+  get length() { return this.arr.length; }
+  has(x, y, z) { return this.counts.has(K(x, y, z)); }
+  add(p) {
+    this.arr.push(p);
+    const k = K(p.x, p.y, p.z);
+    this.counts.set(k, (this.counts.get(k) || 0) + 1);
+  }
+  remove(p) {
+    const i = this.arr.findIndex(q => q.x === p.x && q.y === p.y && q.z === p.z);
+    if (i < 0) return false;
+    this.arr.splice(i, 1);
+    const k = K(p.x, p.y, p.z), c = this.counts.get(k) - 1;
+    if (c <= 0) this.counts.delete(k); else this.counts.set(k, c);
+    return true;
+  }
+  // Remove several entries in one pass (same result as calling remove() for each)
+  removeMany(list) {
+    if (!list.length) return;
+    const want = new Map();
+    for (const p of list) { const k = K(p.x, p.y, p.z); if (this.counts.has(k)) want.set(k, (want.get(k) || 0) + 1); }
+    if (!want.size) return;
+    this.arr = this.arr.filter(p => {
+      const k = K(p.x, p.y, p.z), w = want.get(k);
+      if (!w) return true;
+      if (w === 1) want.delete(k); else want.set(k, w - 1);
+      const c = this.counts.get(k) - 1;
+      if (c <= 0) this.counts.delete(k); else this.counts.set(k, c);
+      return false;
+    });
+  }
+  clear() { this.arr.length = 0; this.counts.clear(); }
+}
+
+function boxAt(x, y, z, scale, sway, windY) {
+  return windY
+    ? { cx: x, cy: y + sway, cz: z + 0.5, sx: scale, sy: scale }
+    : { cx: x + sway, cy: y, cz: z + 0.5, sx: scale, sy: scale };
+}
+
+function swayFactorFor(n) { let f = 1.0 - n * 0.12; return f < 0.1 ? 0.1 : f; }
+
+function dampen(sway, x, y, z, windY, test) {
+  if (sway > 0) {
+    if (windY ? test(x, y + 1, z) : test(x + 1, y, z)) sway *= 0.3;
+  } else if (sway < 0) {
+    if (windY ? test(x, y - 1, z) : test(x - 1, y, z)) sway *= 0.3;
+  }
+  return sway;
+}
+
+class CAGrid {
+  constructor(width, length, levels) {
+    this.Width = width; this.Length = length; this.Levels = levels;
+    this.RubbleExtent = 5; this.Maxstack = 3;
+    this.cells = new Map();
+  }
+  has(x, y, z) { return this.cells.has(K(x, y, z)); }
+  alive(x, y, z) { return this.cells.get(K(x, y, z)) === true; }
+  set(x, y, z, v) { this.cells.set(K(x, y, z), v); }
+  ensure(x, y, z) { const k = K(x, y, z); if (!this.cells.has(k)) this.cells.set(k, false); }
+  neighbours(x, y, z) {
+    let n = 0;
+    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++)
+      if (!(dx === 0 && dy === 0) && this.alive(x + dx, y + dy, z)) n++;
+    return n;
+  }
+
+  initialise(seedX, seedY, seed, density) {
+    const rnd = makeRandom(seed);
+    for (let x = 0; x < this.Width; x++) for (let y = 0; y < this.Length; y++) for (let z = 0; z < this.Levels; z++)
+      this.set(x, y, z, false);
+    for (let x = 0; x < this.Width; x++) for (let y = 0; y < this.Length; y++)
+      if (rnd.nextDouble() < density) this.set(x, y, 0, true);
+    this.set(seedX, seedY, 0, true); // centre box always alive
+  }
+
+  extendLevels(newLevels, rubble) {
+    for (let x = 0; x < this.Width; x++) for (let y = 0; y < this.Length; y++)
+      for (let z = this.Levels; z < newLevels; z++) this.ensure(x, y, z);
+    for (const r of rubble.arr)
+      for (let z = this.Levels; z < newLevels; z++) this.ensure(r.x, r.y, z);
+    this.Levels = newLevels;
+  }
+
+  generateLevel(z, birthMin, birthMax, surviveMin, rubble, useRubble, pureBirth) {
+    const positions = [], seen = new Set();
+    for (let x = 0; x < this.Width; x++) for (let y = 0; y < this.Length; y++) {
+      positions.push({ x, y }); seen.add(K(x, y, 0));
+    }
+    if (useRubble) for (const r of rubble.arr) {
+      const k = K(r.x, r.y, 0);
+      if (!seen.has(k)) { seen.add(k); positions.push({ x: r.x, y: r.y }); }
+    }
+    for (const { x, y } of positions) {
+      if (this.alive(x, y, z)) continue;
+      if (!this.has(x, y, z - 1)) continue;
+      let count = 0;
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+        if (dx === 0 && dy === 0) continue;
+        const nx = x + dx, ny = y + dy;
+        if (this.alive(nx, ny, z - 1) || rubble.has(nx, ny, z - 1)) count++;
+      }
+      const existedBelow = this.alive(x, y, z - 1);
+      if (count >= birthMin && count <= birthMax) this.set(x, y, z, true);
+      else if (!pureBirth && existedBelow && count >= surviveMin) this.set(x, y, z, true);
+      else this.set(x, y, z, false);
+    }
+  }
+
+  findUnsupported(falling, rubble) {
+    const aliveCells = [];
+    for (const [k, v] of this.cells) if (v === true && KZ(k) > 0) aliveCells.push({ x: KX(k), y: KY(k), z: KZ(k) });
+    for (const { x, y, z } of aliveCells) {
+      const hasSupport = this.alive(x, y, z - 1) || rubble.has(x, y, z - 1);
+      if (!hasSupport && !falling.has(x, y, z)) {
+        const bracedX = this.alive(x + 1, y, z) && this.alive(x - 1, y, z);
+        const bracedY = this.alive(x, y + 1, z) && this.alive(x, y - 1, z);
+        if (!bracedX && !bracedY) { this.set(x, y, z, false); falling.add({ x, y, z }); }
+      }
+    }
+  }
+
+  fallingStep(falling, rubble, rnd, windFall) {
+    let anyLanded = false;
+    const toRemove = [], toAdd = [];
+    const centreX = Math.floor(this.Width / 2), centreY = Math.floor(this.Length / 2);
+
+    for (const box of falling.arr.slice()) {
+      const newZ = box.z - 1;
+      const gridBelow = this.alive(box.x, box.y, newZ);
+      const rubbleBelow = rubble.has(box.x, box.y, newZ);
+      const landed = windFall ? (newZ < 0 || rubbleBelow) : (newZ < 0 || gridBelow || rubbleBelow);
+
+      if (landed) {
+        const dirX = box.x >= centreX ? 1 : -1;
+        const dirY = box.y >= centreY ? 1 : -1;
+
+        let offsetX = 0; const rollX = rnd.next(5);
+        if (rollX === 0) offsetX = dirX * 2; else if (rollX === 1) offsetX = dirX; else if (rollX === 4) offsetX = -dirX;
+        let offsetY = 0; const rollY = rnd.next(5);
+        if (rollY === 0) offsetY = dirY * 2; else if (rollY === 1) offsetY = dirY; else if (rollY === 4) offsetY = -dirY;
+
+        const adaptiveExtent = this.RubbleExtent + Math.min(8, Math.floor(rubble.length / 50)); // capped for the web version
+        const minBound = -adaptiveExtent;
+        const maxBoundX = this.Width + adaptiveExtent, maxBoundY = this.Length + adaptiveExtent;
+        const clampX = v => Math.max(minBound, Math.min(maxBoundX, v));
+        const clampY = v => Math.max(minBound, Math.min(maxBoundY, v));
+
+        const landX = clampX(box.x + offsetX), landY = clampY(box.y + offsetY);
+        let finalX = landX, finalY = landY, finalZ = 0;
+        let foundSpot = false, attempts = 0;
+        while (attempts < 10 && !foundSpot) {
+          let stackHeight = 0;
+          while (rubble.has(finalX, finalY, stackHeight)) stackHeight++;
+          if (stackHeight <= this.Maxstack) { finalZ = stackHeight; foundSpot = true; }
+          else {
+            finalX = clampX(landX + rnd.range(-2, 3));
+            finalY = clampY(landY + rnd.range(-2, 3));
+            attempts++;
+          }
+        }
+        if (!foundSpot) while (rubble.has(finalX, finalY, finalZ)) finalZ++;
+
+        for (let z = 0; z < this.Levels; z++) this.ensure(finalX, finalY, z);
+        rubble.add({ x: finalX, y: finalY, z: finalZ });
+        toRemove.push(box);
+        anyLanded = true;
+      } else {
+        const minBound = -this.RubbleExtent;
+        const maxBoundX = this.Width + this.RubbleExtent - 1, maxBoundY = this.Length + this.RubbleExtent - 1;
+        let driftX = 0, driftY = 0;
+        if (box.x > minBound && box.x < maxBoundX && rnd.next(3) === 0) driftX = box.x >= centreX ? 1 : -1;
+        if (box.y > minBound && box.y < maxBoundY && rnd.next(3) === 0) driftY = box.y >= centreY ? 1 : -1;
+        toRemove.push(box);
+        toAdd.push({ x: box.x + driftX, y: box.y + driftY, z: newZ });
+      }
+    }
+    falling.removeMany(toRemove);
+    for (const b of toAdd) falling.add(b);
+    return anyLanded;
+  }
+
+  windInstabilityCheck(falling, rubble, windHeight, windOffset, threshold) {
+    let anyFell = false;
+    const aliveCells = [];
+    for (const [k, v] of this.cells) if (v === true && KZ(k) >= windHeight) aliveCells.push({ x: KX(k), y: KY(k), z: KZ(k) });
+
+    for (const c of aliveCells) {
+      const sway = windOffset * (c.z - windHeight + 1) * swayFactorFor(this.neighbours(c.x, c.y, c.z));
+      if (Math.abs(sway) > threshold && !falling.has(c.x, c.y, c.z)) {
+        this.set(c.x, c.y, c.z, false);
+        falling.add({ x: c.x, y: c.y, z: c.z });
+        anyFell = true;
+      }
+    }
+
+    const rubbleToRemove = [];
+    const rubbleWindHeight = Math.floor((windHeight * 3) / 4);
+    for (const cur of rubble.arr) {
+      if (cur.z < rubbleWindHeight) continue;
+      let sway = windOffset * (cur.z - rubbleWindHeight + 1);
+      let rn = 0;
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++)
+        if (!(dx === 0 && dy === 0) && rubble.has(cur.x + dx, cur.y + dy, cur.z)) rn++;
+      sway *= swayFactorFor(rn);
+      const rubbleThreshold = 0.4 + rn * 0.08;
+      if (Math.abs(sway) > rubbleThreshold && !falling.has(cur.x, cur.y, cur.z)) {
+        falling.add({ x: cur.x, y: cur.y, z: cur.z });
+        rubbleToRemove.push(cur);
+        anyFell = true;
+      }
+    }
+    rubble.removeMany(rubbleToRemove);
+    return anyFell;
+  }
+
+  reseedLevel(z, seed, density, rubble, useRubble) {
+    const rnd = makeRandom(seed);
+    for (let x = 0; x < this.Width; x++) for (let y = 0; y < this.Length; y++) {
+      this.ensure(x, y, z);
+      if (this.alive(x, y, z)) continue;
+      if (rnd.nextDouble() < density) this.set(x, y, z, true);
+    }
+    if (useRubble) {
+      const surface = new Map();
+      for (const r of rubble.arr) {
+        const k = K(r.x, r.y, 0);
+        if (!surface.has(k) || r.z > surface.get(k).z) surface.set(k, r);
+      }
+      for (const r of surface.values()) {
+        const { x, y } = r, heightz = r.z;
+        if (heightz < z) continue;
+        const seedz = heightz + 1;
+        if (seedz >= this.Levels) continue;
+        for (let lz = 0; lz < this.Levels; lz++) this.ensure(x, y, lz);
+        this.ensure(x, y, seedz);
+        if (this.alive(x, y, seedz)) continue;
+        if (rnd.nextDouble() < density) this.set(x, y, seedz, true);
+      }
+    }
+  }
+
+  getTowerBoxes(windHeight, windStrength, windTick, taper, windY, stopWind) {
+    const boxes = [];
+    const windOffset = stopWind ? 0 : Math.sin(windTick * 0.08) * windStrength;
+    const isAlive = (x, y, z) => this.alive(x, y, z);
+    for (const [k, v] of this.cells) {
+      if (v !== true) continue;
+      const lx = KX(k), ly = KY(k), lz = KZ(k);
+      if (lx < 0 || lx >= this.Width || ly < 0 || ly >= this.Length) continue;
+      let sway = 0;
+      if (lz >= windHeight) {
+        sway = windOffset * (lz - windHeight + 1) * swayFactorFor(this.neighbours(lx, ly, lz));
+        sway = dampen(sway, lx, ly, lz, windY, isAlive);
+      }
+      let scale = 1;
+      if (taper) { scale = 1 - lz * 0.02; if (scale < 0.4) scale = 0.4; }
+      boxes.push(boxAt(lx, ly, lz, scale, sway, windY));
+    }
+    return boxes;
+  }
+
+  getFallingBoxes(falling, windHeight, windFallOffset, windY) {
+    const boxes = [];
+    for (const fb of falling.arr) {
+      let s = 0;
+      if (fb.z >= windHeight) s = windFallOffset * (fb.z - windHeight + 1) * swayFactorFor(this.neighbours(fb.x, fb.y, fb.z));
+      boxes.push(boxAt(fb.x, fb.y, fb.z, 1, s, windY));
+    }
+    return boxes;
+  }
+
+  getRubbleBoxes(rubble, taper, windHeight, windStrength, windTick, windY, stopWind) {
+    const boxes = [];
+    const windOffset = stopWind ? 0 : Math.sin(windTick * 0.08) * windStrength;
+    const maxStack = new Map();
+    for (const r of rubble.arr) {
+      const k = K(r.x, r.y, 0);
+      if (!maxStack.has(k) || r.z > maxStack.get(k)) maxStack.set(k, r.z);
+    }
+    const taperScale = (x, y, z) => {
+      if (!taper) return 1;
+      const top = maxStack.get(K(x, y, 0)) || 0;
+      if (top <= 0) return 1;
+      let s = 1 - (z / top) * 0.4;
+      return s < 0.5 ? 0.5 : s;
+    };
+    const inRubble = (x, y, z) => rubble.has(x, y, z);
+    const toRemove = [];
+    for (const r of rubble.arr) {
+      if (this.alive(r.x, r.y, r.z)) { toRemove.push(r); continue; }
+      let sway = 0;
+      if (r.z >= windHeight) {
+        let rn = 0;
+        for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++)
+          if (!(dx === 0 && dy === 0) && rubble.has(r.x + dx, r.y + dy, r.z)) rn++;
+        sway = windOffset * (r.z - windHeight + 1) * swayFactorFor(rn);
+        sway = dampen(sway, r.x, r.y, r.z, windY, inRubble);
+      }
+      boxes.push(boxAt(r.x, r.y, r.z, taperScale(r.x, r.y, r.z), sway, windY));
+    }
+    rubble.removeMany(toRemove);
+
+    // Tower cells that grew outside the original footprint (on rubble)
+    const isAlive = (x, y, z) => this.alive(x, y, z);
+    for (const [k, v] of this.cells) {
+      if (v !== true) continue;
+      const ox = KX(k), oy = KY(k), oz = KZ(k);
+      if (ox >= 0 && ox < this.Width && oy >= 0 && oy < this.Length) continue;
+      let sway = 0;
+      if (oz >= windHeight) {
+        sway = windOffset * (oz - windHeight + 1) * swayFactorFor(this.neighbours(ox, oy, oz));
+        sway = dampen(sway, ox, oy, oz, windY, isAlive);
+      }
+      boxes.push(boxAt(ox, oy, oz, taperScale(ox, oy, oz), sway, windY));
+    }
+    return boxes;
+  }
+}
+const PHASE = { idle: 0, generate: 1, falling: 2, wind: 3 };
+
+class Simulation {
+  constructor() {
+    this.grid = null; this.currentLevel = 0; this.targetLevel = 0; this.phase = PHASE.idle;
+    this.windTick = 0; this.windCheckcooldown = 0; this.windFalloffset = 0; this.windCausedFall = false;
+    this.rubble = new PosList(); this.falling = new PosList();
+    this.rnd = makeRandom((Date.now() & 0x7fffffff));
+    this.newGame(36);
+  }
+  resetRun() {
+    this.windTick = 0; this.windCausedFall = false; this.windCheckcooldown = 0; this.windFalloffset = 0;
+  }
+  // Challenge state: score, target, gusts
+  newGame(target) {
+    this.score = 0; this.target = target; this.height = 0; this.bestHeight = 0;
+    this.targetReached = false; this.windMul = 1; this.gusts = 0;
+    this.gustIn = 50 + this.rnd.next(50);
+    this.events = [];
+  }
+
+  // One solution of the Grasshopper component. Returns null when there is no grid.
+  tick(p) {
+    const seedX = Math.floor(p.width / 2), seedY = Math.floor(p.length / 2);
+    const windHeight = Math.floor((p.levels * 7) / 10);
+    const windThreshold = 0.6 + p.levels * 0.05;
+    const maxStack = 2 + Math.floor(p.levels / 5);
+    const rubbleExtent = 3 + Math.floor(p.levels / 2);
+    const rubble = this.rubble, falling = this.falling;
+    let sleep = 0;
+
+    if (p.restart) {
+      this.grid = null; rubble.clear(); falling.clear();
+      this.currentLevel = 0; this.targetLevel = 0; this.phase = PHASE.idle; this.resetRun();
+      this.newGame(p.target);
+    }
+    if (p.startGen) {
+      this.grid = new CAGrid(p.width, p.length, p.levels);
+      this.grid.initialise(seedX, seedY, p.seed, p.density);
+      this.currentLevel = 1; this.phase = PHASE.generate; this.targetLevel = p.levels;
+      this.resetRun(); rubble.clear(); falling.clear();
+      this.newGame(p.target);
+    }
+    const g = this.grid;
+    if (g) { g.RubbleExtent = rubbleExtent; g.Maxstack = maxStack; }
+
+    // Gusts: while the wind blows, strength ramps up at random intervals
+    if (g && this.phase === PHASE.wind && !p.stopWind && p.gusts) {
+      if (--this.gustIn <= 0) {
+        const inc = 0.1 + this.rnd.nextDouble() * 0.3;
+        this.windMul = Math.min(4, this.windMul + inc);
+        this.gusts++;
+        this.gustIn = 40 + this.rnd.next(60);
+        this.windCheckcooldown = Math.min(this.windCheckcooldown, 3);
+        this.events.push({ type: "gust", mul: this.windMul });
+      }
+    }
+    const windStrength = (0.05 + p.levels * 0.02) * this.windMul;
+
+    if (p.clearRubble) {
+      rubble.clear();
+      if (g) { g.findUnsupported(falling, rubble); if (falling.length > 0) this.phase = PHASE.falling; }
+    }
+
+    if (p.continueGen && g && this.phase === PHASE.wind) {
+      const from = p.continueFromLevel, newTarget = from + p.levels;
+      if (newTarget > g.Levels) g.extendLevels(newTarget, rubble);
+      g.reseedLevel(from, p.seed + from, p.density, rubble, p.useRubble);
+      this.currentLevel = from + 1; this.targetLevel = newTarget; this.phase = PHASE.generate;
+    }
+
+    if (this.phase === PHASE.generate && g) {
+      if (this.currentLevel < this.targetLevel && this.currentLevel < g.Levels) {
+        g.generateLevel(this.currentLevel, p.birthMin, p.birthMax, p.surviveMin, rubble, p.useRubble, p.pureBirth);
+        this.currentLevel++;
+      }
+      if (this.currentLevel >= this.targetLevel) { g.findUnsupported(falling, rubble); this.phase = PHASE.falling; }
+      sleep = 75;
+    } else if (this.phase === PHASE.falling && g) {
+      this.windFalloffset *= 0.85;
+      const landed = g.fallingStep(falling, rubble, this.rnd, this.windCausedFall);
+      if (landed) g.findUnsupported(falling, rubble);
+      if (falling.length === 0) {
+        if (!this.windCausedFall) {
+          let changed = true;
+          while (changed) {
+            changed = false;
+            const toRemove = [];
+            for (const r of rubble.arr) {
+              const groundBelow = r.z === 0;
+              const rubbleBelow = rubble.has(r.x, r.y, r.z - 1);
+              const gridBelow = g.alive(r.x, r.y, r.z - 1);
+              if (!groundBelow && !rubbleBelow && !gridBelow) toRemove.push(r);
+            }
+            if (toRemove.length) { rubble.removeMany(toRemove); changed = true; }
+          }
+        }
+        this.windCausedFall = false; this.windFalloffset = 0; this.windCheckcooldown = 15;
+        this.phase = PHASE.wind;
+        this.events.push({ type: "settled" });
+      }
+      sleep = 100;
+    } else if (this.phase === PHASE.wind && g) {
+      if (!p.stopWind) {
+        const windOffset = Math.sin(this.windTick * 0.08) * windStrength;
+        if (this.windCheckcooldown > 0) this.windCheckcooldown--;
+        else {
+          this.windCausedFall = g.windInstabilityCheck(falling, rubble, windHeight, windOffset, windThreshold);
+          if (this.windCausedFall) { this.windFalloffset = windOffset; this.windCheckcooldown = 60; this.phase = PHASE.falling; }
+        }
+      }
+      sleep = 100;
+    }
+
+    if (!g) return null;
+    this.windTick++;
+
+    // Height of the standing tower + scoring
+    let h = 0;
+    for (const [k, v] of g.cells) if (v === true) { const z = KZ(k) + 1; if (z > h) h = z; }
+    this.height = h;
+    if (this.phase === PHASE.wind) {
+      if (h > this.bestHeight) this.bestHeight = h;
+      if (!p.stopWind) this.score += h;
+      if (!this.targetReached && h >= this.target) {
+        this.targetReached = true;
+        this.score += this.target * 100;
+        this.events.push({ type: "target", bonus: this.target * 100 });
+      }
+    }
+
+    return {
+      sleep,
+      A: g.getTowerBoxes(windHeight, windStrength, this.windTick, p.taper, p.windY, p.stopWind),
+      B: g.getFallingBoxes(falling, windHeight, this.windFalloffset, p.windY),
+      C: g.getRubbleBoxes(rubble, p.taper, windHeight, windStrength, this.windTick, p.windY, p.stopWind),
+    };
+  }
+}
+// ===SIM END===
+
+// ---------- Controls ----------
+const SLIDERS = {
+  secChallenge: [["target", "Target height", 10, 60, 1, 36]],
+  secSetup: [
+    ["width", "Width", 3, 30, 1, 12],
+    ["length", "Length", 3, 30, 1, 12],
+    ["levels", "Levels per build", 2, 30, 1, 18],
+    ["seed", "Seed", 0, 999, 1, 7],
+    ["density", "Density", 0, 1, 0.01, 0.4],
+  ],
+  secRules: [
+    ["birthMin", "Birth min neighbours", 0, 8, 1, 3],
+    ["birthMax", "Birth max neighbours", 0, 8, 1, 5],
+    ["surviveMin", "Survive min neighbours", 0, 8, 1, 2],
+  ],
+  secContinue: [["continueFromLevel", "Continue from level", 0, 60, 1, 10]],
+  secDisplay: [["speed", "Speed", 0.25, 4, 0.25, 1]],
+};
+const TOGGLES = {
+  secChallenge: [["gusts", "Random gusts", "Wind picks up at random intervals", true]],
+  secRules: [["pureBirth", "Pure birth", "Birth rule only, nothing survives from below", false]],
+  secEnv: [
+    ["useRubble", "Build on rubble", "Rubble counts as neighbours and as ground", true],
+    ["stopWind", "Stop wind", "Pauses sway, gusts and scoring", false],
+    ["windY", "Wind along Y", "Otherwise the wind blows along X", false],
+  ],
+  secDisplay: [
+    ["taper", "Taper", "Shrink boxes with height", false],
+    ["gaps", "Voxel gaps", "Small gaps so individual blocks read", true],
+  ],
+};
+
+const inputs = {};
+for (const [sec, list] of Object.entries(SLIDERS)) {
+  const el = document.getElementById(sec);
+  for (const [id, label, min, max, step, val] of list) {
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = `<label for="${id}"><span>${label}</span><output id="${id}Out"></output></label>
+      <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}">`;
+    el.appendChild(row);
+    const inp = row.querySelector("input"), out = row.querySelector("output");
+    const show = () => out.textContent = step < 1 ? (+inp.value).toFixed(2).replace(/0$/, "") : inp.value;
+    inp.addEventListener("input", show); show();
+    inp._show = show;
+    inputs[id] = inp;
+  }
+}
+for (const [sec, list] of Object.entries(TOGGLES)) {
+  const el = document.getElementById(sec);
+  for (const [id, label, desc, val] of list) {
+    const row = document.createElement("label");
+    row.className = "toggle";
+    row.innerHTML = `<span>${label}<small>${desc}</small></span><input type="checkbox" id="${id}" ${val ? "checked" : ""}>`;
+    el.appendChild(row);
+    inputs[id] = row.querySelector("input");
+  }
+}
+const btnContinue = document.createElement("button");
+btnContinue.textContent = "Continue growing";
+btnContinue.className = "primary";
+btnContinue.style.width = "100%";
+document.getElementById("secContinue").appendChild(btnContinue);
+
+let needsFraming = false;
+const pending = { restart: false, startGen: false, continueGen: false, clearRubble: false };
+document.getElementById("btnStart").onclick = () => { pending.startGen = true; needsFraming = true; };
+document.getElementById("btnRestart").onclick = () => { pending.restart = true; };
+document.getElementById("btnClear").onclick = () => { pending.clearRubble = true; };
+document.getElementById("btnSeed").onclick = () => {
+  inputs.seed.value = Math.floor(Math.random() * 1000);
+  inputs.seed._show();
+};
+btnContinue.onclick = () => { pending.continueGen = true; needsFraming = true; };
+
+function readParams() {
+  const n = id => +inputs[id].value, b = id => inputs[id].checked;
+  const p = {
+    width: n("width"), length: n("length"), levels: n("levels"), seed: n("seed"), density: n("density"),
+    birthMin: n("birthMin"), birthMax: n("birthMax"), surviveMin: n("surviveMin"),
+    continueFromLevel: n("continueFromLevel"), target: n("target"),
+    pureBirth: b("pureBirth"), useRubble: b("useRubble"), stopWind: b("stopWind"), windY: b("windY"), taper: b("taper"),
+    gusts: b("gusts"),
+    ...pending,
+  };
+  for (const k in pending) pending[k] = false;
+  return p;
+}
+
+// ---------- Modals ----------
+const intro = document.getElementById("intro"), help = document.getElementById("help");
+const openModal = m => { m.classList.add("open"); m.querySelector(".sheet").scrollTop = 0; }, closeModal = m => m.classList.remove("open");
+document.getElementById("introPlay").onclick = () => closeModal(intro);
+document.getElementById("introHelp").onclick = () => { closeModal(intro); openModal(help); };
+document.getElementById("btnHelp").onclick = () => openModal(help);
+document.getElementById("helpClose").onclick = () => closeModal(help);
+for (const m of [intro, help]) m.addEventListener("click", e => { if (e.target === m) closeModal(m); });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { closeModal(intro); closeModal(help); }
+  if (e.key === "?" ) openModal(help);
+});
+
+// ---------- Three.js scene ----------
+const container = document.getElementById("view");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+container.appendChild(renderer.domElement);
+
+const BG = "#1b1d21";
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(BG);
+scene.fog = new THREE.Fog(BG, 140, 300);
+
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1000);
+camera.up.set(0, 0, 1); // Rhino-style Z-up
+camera.position.set(36, -30, 28);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.target.set(6, 6, 8);
+
+scene.add(new THREE.HemisphereLight("#ffffff", "#30343a", 1.25));
+const sun = new THREE.DirectionalLight("#ffffff", 1.8);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.bias = -0.0005;
+scene.add(sun, sun.target);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), new THREE.ShadowMaterial({ opacity: 0.35 }));
+ground.receiveShadow = true;
+scene.add(ground);
+let gridGroup = null;
+
+const geo = new THREE.BoxGeometry(1, 1, 1);
+const layers = ["#19e3f0", "#ffb300", "#39e639"].map(color => {
+  const c = new THREE.Color(color);
+  return { mesh: null, cap: 0,
+    mat: new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, metalness: 0, emissive: c.clone().multiplyScalar(0.18) }) };
+});
+
+function ensureCapacity(layer, n) {
+  if (n <= layer.cap && layer.mesh) return;
+  let cap = Math.max(256, layer.cap);
+  while (cap < n) cap *= 2;
+  if (layer.mesh) { scene.remove(layer.mesh); layer.mesh.dispose(); }
+  layer.mesh = new THREE.InstancedMesh(geo, layer.mat, cap);
+  layer.mesh.castShadow = true; layer.mesh.receiveShadow = true;
+  layer.mesh.count = 0;
+  layer.cap = cap;
+  scene.add(layer.mesh);
+}
+layers.forEach(l => ensureCapacity(l, 256));
+
+const m4 = new THREE.Matrix4(), pos = new THREE.Vector3(), quat = new THREE.Quaternion(), scl = new THREE.Vector3();
+function writeLayer(layer, boxes) {
+  ensureCapacity(layer, boxes.length);
+  const g = inputs.gaps.checked ? 0.9 : 1;
+  for (let i = 0; i < boxes.length; i++) {
+    const b = boxes[i];
+    pos.set(b.cx, b.cy, b.cz); scl.set(b.sx * g, b.sy * g, g);
+    layer.mesh.setMatrixAt(i, m4.compose(pos, quat, scl));
+  }
+  layer.mesh.count = boxes.length;
+  layer.mesh.instanceMatrix.needsUpdate = true;
+}
+
+function axisLine(color, to) {
+  const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0.01), to]);
+  return new THREE.Line(g, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.8 }));
+}
+
+function frame(w, l, lv) {
+  const cx = (w - 1) / 2, cy = (l - 1) / 2, cz = lv / 2;
+  const size = Math.max(w, l, lv);
+  controls.target.set(cx, cy, cz * 0.8);
+  const dir = new THREE.Vector3(1.1, -1, 0.75).normalize();
+  camera.position.copy(controls.target).addScaledVector(dir, size * 2.4 + 10);
+  const r = size + 20;
+  sun.position.set(cx + r, cy - r * 0.6, lv + r);
+  sun.target.position.set(cx, cy, 0);
+  Object.assign(sun.shadow.camera, { left: -r * 1.2, right: r * 1.2, top: r * 1.2, bottom: -r * 1.2, near: 1, far: r * 5 });
+  sun.shadow.camera.updateProjectionMatrix();
+
+  if (gridGroup) scene.remove(gridGroup);
+  gridGroup = new THREE.Group();
+  const gs = Math.ceil(Math.max(w, l) + lv + 10);
+  const minor = new THREE.GridHelper(gs * 2, gs * 2, "#2b2f35", "#2b2f35");
+  const major = new THREE.GridHelper(gs * 2, Math.round(gs / 5) * 2 || 2, "#3a3f47", "#3a3f47");
+  for (const gh of [minor, major]) { gh.rotation.x = Math.PI / 2; gh.position.set(cx, cy, 0.002); gridGroup.add(gh); }
+  // Rhino-style world axes
+  gridGroup.add(axisLine("#c0392b", new THREE.Vector3(gs, 0, 0.01)));
+  gridGroup.add(axisLine("#2e8b3a", new THREE.Vector3(0, gs, 0.01)));
+  scene.add(gridGroup);
+}
+frame(12, 12, 18);
+
+function resize() {
+  const w = container.clientWidth, h = container.clientHeight;
+  renderer.setSize(w, h, false);
+  renderer.domElement.style.width = w + "px"; renderer.domElement.style.height = h + "px";
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(container);
+resize();
+
+(function render() {
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(render);
+})();
+
+// ---------- HUD ----------
+const $ = id => document.getElementById(id);
+const PHASE_NAMES = ["Idle", "Growing", "Collapsing", "Wind"];
+const PHASE_COLORS = ["var(--muted)", "var(--tower)", "var(--falling)", "var(--rubble)"];
+let best = 0;
+try { best = +localStorage.getItem("towerInFluxBest") || 0; } catch (e) {}
+$("bestVal").textContent = `best ${best.toLocaleString()}`;
+
+let toastTimer = null;
+function toast(kind, html, ms = 1400) {
+  const t = $("toast");
+  t.className = `toast ${kind} show`; t.innerHTML = html;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), ms);
+}
+
+// ---------- Simulation loop ----------
+const sim = new Simulation();
+
+function loop() {
+  const p = readParams();
+  const out = sim.tick(p);
+
+  for (const ev of sim.events) {
+    if (ev.type === "gust") toast("gust", `Gust!<small>wind ×${ev.mul.toFixed(2)}</small>`);
+    else if (ev.type === "target") toast("win", `Target reached!<small>+${ev.bonus.toLocaleString()} bonus</small>`, 2400);
+    else if (ev.type === "settled") {
+      const top = Math.max(0, sim.height - 1);
+      inputs.continueFromLevel.max = Math.max(60, top);
+      inputs.continueFromLevel.value = top; inputs.continueFromLevel._show();
+    }
+  }
+  sim.events.length = 0;
+
+  if (out) {
+    if (needsFraming) { frame(p.width, p.length, Math.max(sim.targetLevel, sim.target)); needsFraming = false; }
+    writeLayer(layers[0], out.A); writeLayer(layers[1], out.B); writeLayer(layers[2], out.C);
+    const windLabel = sim.phase === PHASE.wind && p.stopWind ? "Wind (paused)" : PHASE_NAMES[sim.phase];
+    $("hudPhase").textContent = windLabel;
+    $("hudDot").style.background = PHASE_COLORS[sim.phase];
+    $("hudLevel").textContent = sim.phase === PHASE.generate
+      ? `building level ${Math.min(sim.currentLevel, sim.targetLevel)} / ${sim.targetLevel}`
+      : `gusts ${sim.gusts} · best height ${sim.bestHeight}`;
+    $("hudCounts").textContent = `tower ${out.A.length} · falling ${out.B.length} · rubble ${out.C.length}`;
+  } else {
+    layers.forEach(l => { l.mesh.count = 0; });
+    $("hudPhase").textContent = "Idle"; $("hudDot").style.background = PHASE_COLORS[0];
+    $("hudLevel").textContent = "press New game"; $("hudCounts").textContent = "tower 0 · falling 0 · rubble 0";
+  }
+
+  // Score card
+  const target = sim.grid ? sim.target : +inputs.target.value;
+  $("scoreVal").textContent = sim.score.toLocaleString();
+  if (sim.score > best) {
+    best = sim.score;
+    try { localStorage.setItem("towerInFluxBest", String(best)); } catch (e) {}
+  }
+  $("bestVal").textContent = `best ${best.toLocaleString()}`;
+  $("heightTxt").textContent = `${sim.height} / ${target}`;
+  $("heightBar").style.width = `${Math.min(100, (sim.height / target) * 100)}%`;
+  $("heightBar").classList.toggle("done", sim.targetReached);
+  $("windTxt").textContent = `×${sim.windMul.toFixed(2)}`;
+  $("windBar").style.width = `${((sim.windMul - 1) / 3) * 100}%`;
+
+  btnContinue.disabled = !(sim.grid && sim.phase === PHASE.wind);
+  const delay = out ? out.sleep / +inputs.speed.value : 60;
+  setTimeout(loop, Math.max(16, delay));
+}
+loop();
+</script>
+</body>
+</html>
