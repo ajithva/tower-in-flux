@@ -288,7 +288,7 @@
     </ul>
 
     <h3>Lighting</h3>
-    <p>Under <b>Lighting &amp; display</b>, choose <b>Day</b>, <b>Night</b> or <b>Cycle</b>. In Cycle the sun crosses the sky, the moon and stars come out, and after dusk random cubes in the tower light up like windows and switch on and off. <b>Day length</b> sets how long a full day takes, and <b>Glow</b> turns the bloom effect on or off. The lighting is purely visual and doesn't change the simulation.</p>
+    <p>Under <b>Lighting &amp; display</b>, choose <b>Day</b>, <b>Night</b> or <b>Cycle</b>. In Cycle the sun crosses the sky, the moon and stars come out, and after dusk random cubes on the tower's sides light up like windows and switch on and off. <b>Day length</b> sets how long a full day takes, and <b>Glow</b> turns the bloom effect on or off. The lighting is purely visual and doesn't change the simulation.</p>
 
     <h3>Controls</h3>
     <p>Drag to orbit, scroll or pinch to zoom, and right-drag to pan. The <b>Speed</b> slider changes how fast the simulation runs.</p>
@@ -1154,9 +1154,10 @@ function splitWindows(boxes, nowSec, grid) {
   const A = (x, y, z) => grid.alive(x, y, z);
   for (const b of boxes) {
     const { ix: x, iy: y, iz: z } = b;
-    // only cubes on the sides of the tower: at least one open side, and covered from above (no roof cubes)
+    // only cubes on the sides of the tower: at least one open side, covered from above (no roof cubes)
+    // and sitting on a cube below (no ground-floor cubes or overhang undersides)
     const side = !A(x + 1, y, z) || !A(x - 1, y, z) || !A(x, y + 1, z) || !A(x, y - 1, z);
-    if (!side || !A(x, y, z + 1)) { unlit.push(b); continue; }
+    if (!side || z < 1 || !A(x, y, z + 1) || !A(x, y, z - 1)) { unlit.push(b); continue; }
     const epoch = Math.floor(nowSec / 6 + hash3(b.ix, b.iy, b.iz, 7) * 6);
     // each cube has its own "switch-on" threshold, so windows turn on gradually at dusk
     if (hash3(b.ix, b.iy, b.iz, epoch) < frac) lit.push(b); else unlit.push(b);

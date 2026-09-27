@@ -34,7 +34,7 @@ Tower is **cyan**, falling blocks are **amber** and rubble is **green**, which c
 
 ### Lighting
 
-Choose **Day**, **Night** or **Cycle** under *Lighting & display*. In Cycle the sun crosses the sky, the moon and stars come out, and after dusk random cubes on the tower's sides light up like windows and flicker on and off. The shadows are soft, and **Glow** adds a bloom effect to the lit windows. **Day length** sets how long a full day takes. The lighting is visual only and doesn't change the simulation.
+Choose **Day**, **Night** or **Cycle** under *Lighting & display*. In Cycle the sun crosses the sky, the moon and stars come out, and after dusk random cubes on the tower's sides light up like windows (never the roof or the ground floor) and flicker on and off. The shadows are soft, and **Glow** adds a bloom effect to the lit windows. **Day length** sets how long a full day takes. The lighting is visual only and doesn't change the simulation.
 
 ## Controls and their Grasshopper inputs
 
