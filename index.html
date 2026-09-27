@@ -50,6 +50,10 @@
   .toggle { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; cursor: pointer; gap: 10px; }
   .toggle small { display: block; color: var(--muted); font-size: 12px; }
   .toggle input { width: 18px; height: 18px; accent-color: var(--tower); flex: none; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 4px; margin-bottom: 14px; }
+  .seg button { border: 0; background: transparent; padding: 8px 6px; border-radius: 7px; color: var(--muted); }
+  .seg button.on { background: #0f2a2d; color: var(--tower); }
+  .clock { margin-left: auto; padding-left: 14px; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 12px; color: var(--muted); }
   .hint { font-size: 12px; color: var(--muted); line-height: 1.45; margin: 4px 0 0; }
 
   /* HUD */
@@ -75,8 +79,8 @@
     font-weight: 700; font-size: 22px; letter-spacing: .02em; pointer-events: none; opacity: 0; transition: opacity .25s, transform .25s; text-align: center; }
   .toast small { display: block; font-size: 13px; font-weight: 500; opacity: .85; margin-top: 2px; }
   .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  .toast.gust { background: rgba(255,179,0,.14); border: 1px solid var(--falling); color: var(--falling); }
-  .toast.win { background: rgba(57,230,57,.14); border: 1px solid var(--rubble); color: var(--rubble); }
+  .toast.gust { background: rgba(21,23,26,.94); border: 1px solid var(--falling); color: var(--falling); }
+  .toast.win { background: rgba(21,23,26,.94); border: 1px solid var(--rubble); color: var(--rubble); }
   .legend { position: absolute; bottom: 16px; left: 16px; display: flex; gap: 14px; font-size: 12px; color: var(--muted);
     padding: 8px 12px; pointer-events: none; flex-wrap: wrap; }
   .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
@@ -142,13 +146,17 @@
     <section id="secSetup"><h2>Grid</h2></section>
     <section id="secRules"><h2>Growth rules</h2></section>
     <section id="secEnv"><h2>Wind &amp; rubble</h2></section>
-    <section id="secDisplay"><h2>Display</h2></section>
+    <section id="secDisplay"><h2>Lighting &amp; display</h2>
+      <div class="seg" id="lightMode" role="group" aria-label="Lighting">
+        <button data-m="day">☀ Day</button><button data-m="night">☾ Night</button><button data-m="cycle" class="on">↻ Cycle</button>
+      </div>
+    </section>
   </aside>
 
   <main>
     <div id="view"></div>
     <div class="hud glass">
-      <div class="phase"><span class="dot" id="hudDot"></span><span id="hudPhase">Idle</span></div>
+      <div class="phase"><span class="dot" id="hudDot"></span><span id="hudPhase">Idle</span><span class="clock" id="hudClock"></span></div>
       <div id="hudLevel">press New game</div>
       <div id="hudCounts">tower 0 · falling 0 · rubble 0</div>
     </div>
@@ -157,6 +165,7 @@
         <div class="lbl">Score</div>
         <div class="big" id="scoreVal">0</div>
         <div class="best" id="bestVal">best 0</div>
+        <div class="best" id="movesVal">moves 0 · par –</div>
         <div class="meter">
           <div class="top"><span>Height</span><span id="heightTxt">0 / 36</span></div>
           <div class="bar"><i id="heightBar" style="width:0%"></i></div>
@@ -188,7 +197,7 @@
       <div class="step"><div class="n">1</div><p><b>Tune the rules.</b> Choose the grid size, seed, density and growth rules. They decide how solid or lacy the tower comes out.</p></div>
       <div class="step"><div class="n">2</div><p><b>Press New game.</b> The tower grows level by level, then anything unsupported <span class="c-f">falls</span> and lands as <span class="c-r">rubble</span>.</p></div>
       <div class="step"><div class="n">3</div><p><b>Keep building.</b> While the wind is blowing, press <b>Continue growing</b> to add more levels on top, until you pass the target.</p></div>
-      <div class="step"><div class="n">4</div><p><b>Survive the gusts.</b> You score points for every moment the wind blows, and taller towers earn more. Reaching the target gives a big bonus.</p></div>
+      <div class="step"><div class="n">4</div><p><b>Score with each move.</b> A build scores when the tower settles: 100 points for each new level above your best. Reaching the target earns a bonus, and a bigger one if you get there in fewer moves. Gusts can knock height off, and height you rebuild scores nothing.</p></div>
     </div>
     <div class="actions">
       <button class="primary" id="introPlay">Play</button>
@@ -226,10 +235,12 @@
     <p>While the wind blows, it picks up in random gusts every few seconds, each adding 10–40% more strength, up to ×4. Tall, thin and exposed blocks go first. Only New game or Reset brings the wind back down.</p>
 
     <h3>Scoring</h3>
+    <p>Only your moves score. A move is <b>New game</b> (your first build) or <b>Continue growing</b>. Each one is scored once the tower has finished collapsing and settled.</p>
     <ul>
-      <li>Every tick the wind is blowing, you earn points equal to the tower's current height.</li>
-      <li>The first time the settled tower reaches the <b>target height</b>, you get a bonus of target × 100.</li>
-      <li>Turning on <b>Stop wind</b> pauses the gusts and the scoring, so it isn't a free pass.</li>
+      <li><b>+100 per new level:</b> you only score height above the best height you've reached so far. If the wind knocked levels off, rebuilding them scores nothing.</li>
+      <li><b>Target bonus:</b> the first move that settles at or above the target height earns target × 100.</li>
+      <li><b>Par bonus:</b> par is the number of builds you'd expect to need (target ÷ levels per build, rounded up, + 1). Each move under par adds 1,000.</li>
+      <li>The wind never gives points. It only takes height away, which makes your next move harder.</li>
       <li>Your best score is saved in this browser.</li>
     </ul>
 
@@ -240,6 +251,9 @@
       <li>With <b>Build on rubble</b> on, the tower can spread onto the rubble around its base and brace itself.</li>
       <li><b>Clear rubble</b> takes away that support, and anything resting on it falls.</li>
     </ul>
+
+    <h3>Lighting</h3>
+    <p>Under <b>Lighting &amp; display</b>, choose <b>Day</b>, <b>Night</b> or <b>Cycle</b>. In Cycle the sun crosses the sky, the moon and stars come out, and after dusk random cubes in the tower light up like windows and switch on and off. <b>Day length</b> sets how long a full day takes, and <b>Glow</b> turns the bloom effect on or off. The lighting is purely visual and doesn't change the simulation.</p>
 
     <h3>Controls</h3>
     <p>Drag to orbit, scroll or pinch to zoom, and right-drag to pan. The <b>Speed</b> slider changes how fast the simulation runs.</p>
@@ -259,6 +273,10 @@
 <script type="module">
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
 // ===SIM START===
 // Port of the Grasshopper C# script. Integer grid, keys packed into numbers.
@@ -322,8 +340,8 @@ class PosList {
 
 function boxAt(x, y, z, scale, sway, windY) {
   return windY
-    ? { cx: x, cy: y + sway, cz: z + 0.5, sx: scale, sy: scale }
-    : { cx: x + sway, cy: y, cz: z + 0.5, sx: scale, sy: scale };
+    ? { cx: x, cy: y + sway, cz: z + 0.5, sx: scale, sy: scale, ix: x, iy: y, iz: z }
+    : { cx: x + sway, cy: y, cz: z + 0.5, sx: scale, sy: scale, ix: x, iy: y, iz: z };
 }
 
 function swayFactorFor(n) { let f = 1.0 - n * 0.12; return f < 0.1 ? 0.1 : f; }
@@ -623,6 +641,7 @@ class Simulation {
   newGame(target) {
     this.score = 0; this.target = target; this.height = 0; this.bestHeight = 0;
     this.targetReached = false; this.windMul = 1; this.gusts = 0;
+    this.moves = 0; this.par = 0; this.moveOpen = false;
     this.gustIn = 50 + this.rnd.next(50);
     this.events = [];
   }
@@ -635,7 +654,7 @@ class Simulation {
     const maxStack = 2 + Math.floor(p.levels / 5);
     const rubbleExtent = 3 + Math.floor(p.levels / 2);
     const rubble = this.rubble, falling = this.falling;
-    let sleep = 0;
+    let sleep = 0, justSettled = false;
 
     if (p.restart) {
       this.grid = null; rubble.clear(); falling.clear();
@@ -648,6 +667,8 @@ class Simulation {
       this.currentLevel = 1; this.phase = PHASE.generate; this.targetLevel = p.levels;
       this.resetRun(); rubble.clear(); falling.clear();
       this.newGame(p.target);
+      this.moves = 1; this.moveOpen = true;
+      this.par = Math.ceil(p.target / p.levels) + 1;
     }
     const g = this.grid;
     if (g) { g.RubbleExtent = rubbleExtent; g.Maxstack = maxStack; }
@@ -675,6 +696,7 @@ class Simulation {
       if (newTarget > g.Levels) g.extendLevels(newTarget, rubble);
       g.reseedLevel(from, p.seed + from, p.density, rubble, p.useRubble);
       this.currentLevel = from + 1; this.targetLevel = newTarget; this.phase = PHASE.generate;
+      this.moves++; this.moveOpen = true;
     }
 
     if (this.phase === PHASE.generate && g) {
@@ -705,7 +727,7 @@ class Simulation {
         }
         this.windCausedFall = false; this.windFalloffset = 0; this.windCheckcooldown = 15;
         this.phase = PHASE.wind;
-        this.events.push({ type: "settled" });
+        justSettled = true;
       }
       sleep = 100;
     } else if (this.phase === PHASE.wind && g) {
@@ -727,14 +749,22 @@ class Simulation {
     let h = 0;
     for (const [k, v] of g.cells) if (v === true) { const z = KZ(k) + 1; if (z > h) h = z; }
     this.height = h;
-    if (this.phase === PHASE.wind) {
-      if (h > this.bestHeight) this.bestHeight = h;
-      if (!p.stopWind) this.score += h;
-      if (!this.targetReached && h >= this.target) {
-        this.targetReached = true;
-        this.score += this.target * 100;
-        this.events.push({ type: "target", bonus: this.target * 100 });
+    // Scoring happens only when a player move (New game / Continue growing) settles
+    if (justSettled) {
+      if (this.moveOpen) {
+        this.moveOpen = false;
+        const gained = Math.max(0, h - this.bestHeight);
+        if (h > this.bestHeight) this.bestHeight = h;
+        let bonus = 0;
+        if (!this.targetReached && h >= this.target) {
+          this.targetReached = true;
+          bonus = this.target * 100 + Math.max(0, this.par - this.moves) * 1000;
+        }
+        const pts = gained * 100;
+        this.score += pts + bonus;
+        this.events.push({ type: "move", gained, pts, bonus, height: h });
       }
+      this.events.push({ type: "settled" });
     }
 
     return {
@@ -763,17 +793,18 @@ const SLIDERS = {
     ["surviveMin", "Survive min neighbours", 0, 8, 1, 2],
   ],
   secContinue: [["continueFromLevel", "Continue from level", 0, 60, 1, 10]],
-  secDisplay: [["speed", "Speed", 0.25, 4, 0.25, 1]],
+  secDisplay: [["cycle", "Day length (seconds)", 20, 240, 10, 90], ["speed", "Simulation speed", 0.25, 4, 0.25, 1]],
 };
 const TOGGLES = {
   secChallenge: [["gusts", "Random gusts", "Wind picks up at random intervals", true]],
   secRules: [["pureBirth", "Pure birth", "Birth rule only, nothing survives from below", false]],
   secEnv: [
     ["useRubble", "Build on rubble", "Rubble counts as neighbours and as ground", true],
-    ["stopWind", "Stop wind", "Pauses sway, gusts and scoring", false],
+    ["stopWind", "Stop wind", "Pauses sway and gusts", false],
     ["windY", "Wind along Y", "Otherwise the wind blows along X", false],
   ],
   secDisplay: [
+    ["glow", "Glow", "Bloom on lit windows and highlights", true],
     ["taper", "Taper", "Shrink boxes with height", false],
     ["gaps", "Voxel gaps", "Small gaps so individual blocks read", true],
   ],
@@ -851,42 +882,63 @@ document.addEventListener("keydown", e => {
 
 // ---------- Three.js scene ----------
 const container = document.getElementById("view");
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.VSMShadowMap;          // soft, blurred shadows
+renderer.toneMapping = THREE.ACESFilmicToneMapping;    // filmic light response
+renderer.toneMappingExposure = 1.0;
 container.appendChild(renderer.domElement);
 
-const BG = "#1b1d21";
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(BG);
-scene.fog = new THREE.Fog(BG, 140, 300);
+scene.background = new THREE.Color("#1b1d21");
+scene.fog = new THREE.Fog(scene.background.clone(), 140, 320);
 
-const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1500);
 camera.up.set(0, 0, 1); // Rhino-style Z-up
 camera.position.set(36, -30, 28);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.target.set(6, 6, 8);
 
-scene.add(new THREE.HemisphereLight("#ffffff", "#30343a", 1.25));
-const sun = new THREE.DirectionalLight("#ffffff", 1.8);
-sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-sun.shadow.bias = -0.0005;
-scene.add(sun, sun.target);
+// Lights: sky/ground fill, a key light that is the sun by day and the moon by night, and a cool rim light
+const hemi = new THREE.HemisphereLight("#ffffff", "#2a2e35", 1.0);
+const key = new THREE.DirectionalLight("#ffffff", 2.2);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.radius = 7;
+key.shadow.blurSamples = 16;
+key.shadow.bias = -0.0008;
+const rim = new THREE.DirectionalLight("#7fb8ff", 0.35);
+scene.add(hemi, key, key.target, rim, rim.target);
 
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), new THREE.ShadowMaterial({ opacity: 0.35 }));
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(1200, 1200), new THREE.ShadowMaterial({ opacity: 0.4 }));
 ground.receiveShadow = true;
 scene.add(ground);
-let gridGroup = null;
+
+// Stars (fade in at night)
+const stars = (() => {
+  const n = 900, arr = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const u = Math.random() * Math.PI * 2, v = Math.acos(Math.random() * 0.95); // upper hemisphere
+    const r = 600;
+    arr[i * 3] = r * Math.sin(v) * Math.cos(u); arr[i * 3 + 1] = r * Math.sin(v) * Math.sin(u); arr[i * 3 + 2] = r * Math.cos(v);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(arr, 3));
+  const m = new THREE.PointsMaterial({ color: "#dfe8ff", size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false });
+  const p = new THREE.Points(g, m); scene.add(p); return p;
+})();
 
 const geo = new THREE.BoxGeometry(1, 1, 1);
 const layers = ["#19e3f0", "#ffb300", "#39e639"].map(color => {
   const c = new THREE.Color(color);
   return { mesh: null, cap: 0,
-    mat: new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, metalness: 0, emissive: c.clone().multiplyScalar(0.18) }) };
+    mat: new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, metalness: 0.05, emissive: c.clone(), emissiveIntensity: 0.14 }) };
 });
+// Lit "windows": unlit material pushed above 1.0 so the bloom pass makes them glow
+const litLayer = { mesh: null, cap: 0, mat: new THREE.MeshBasicMaterial({ color: new THREE.Color(1, 1, 1) }) };
+layers.push(litLayer);
+const WINDOW_COLORS = ["#ffd48a", "#ffc070", "#ffe9c2", "#ffb65c", "#cfe8ff"].map(c => new THREE.Color(c));
 
 function ensureCapacity(layer, n) {
   if (n <= layer.cap && layer.mesh) return;
@@ -894,7 +946,7 @@ function ensureCapacity(layer, n) {
   while (cap < n) cap *= 2;
   if (layer.mesh) { scene.remove(layer.mesh); layer.mesh.dispose(); }
   layer.mesh = new THREE.InstancedMesh(geo, layer.mat, cap);
-  layer.mesh.castShadow = true; layer.mesh.receiveShadow = true;
+  layer.mesh.castShadow = true; layer.mesh.receiveShadow = layer !== litLayer;
   layer.mesh.count = 0;
   layer.cap = cap;
   scene.add(layer.mesh);
@@ -902,60 +954,203 @@ function ensureCapacity(layer, n) {
 layers.forEach(l => ensureCapacity(l, 256));
 
 const m4 = new THREE.Matrix4(), pos = new THREE.Vector3(), quat = new THREE.Quaternion(), scl = new THREE.Vector3();
-function writeLayer(layer, boxes) {
+function writeLayer(layer, boxes, colorFn) {
   ensureCapacity(layer, boxes.length);
   const g = inputs.gaps.checked ? 0.9 : 1;
   for (let i = 0; i < boxes.length; i++) {
     const b = boxes[i];
     pos.set(b.cx, b.cy, b.cz); scl.set(b.sx * g, b.sy * g, g);
     layer.mesh.setMatrixAt(i, m4.compose(pos, quat, scl));
+    if (colorFn) layer.mesh.setColorAt(i, colorFn(b));
   }
   layer.mesh.count = boxes.length;
   layer.mesh.instanceMatrix.needsUpdate = true;
+  if (colorFn && layer.mesh.instanceColor) layer.mesh.instanceColor.needsUpdate = true;
 }
 
-function axisLine(color, to) {
-  const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0.01), to]);
-  return new THREE.Line(g, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.8 }));
-}
-
+// Scene extents, used to place the sun/moon and size the shadow camera
+const world = { cx: 5.5, cy: 5.5, h: 18, r: 38 };
 function frame(w, l, lv) {
   const cx = (w - 1) / 2, cy = (l - 1) / 2, cz = lv / 2;
   const size = Math.max(w, l, lv);
   controls.target.set(cx, cy, cz * 0.8);
   const dir = new THREE.Vector3(1.1, -1, 0.75).normalize();
   camera.position.copy(controls.target).addScaledVector(dir, size * 2.4 + 10);
-  const r = size + 20;
-  sun.position.set(cx + r, cy - r * 0.6, lv + r);
-  sun.target.position.set(cx, cy, 0);
-  Object.assign(sun.shadow.camera, { left: -r * 1.2, right: r * 1.2, top: r * 1.2, bottom: -r * 1.2, near: 1, far: r * 5 });
-  sun.shadow.camera.updateProjectionMatrix();
-
-  if (gridGroup) scene.remove(gridGroup);
-  gridGroup = new THREE.Group();
-  const gs = Math.ceil(Math.max(w, l) + lv + 10);
-  const minor = new THREE.GridHelper(gs * 2, gs * 2, "#2b2f35", "#2b2f35");
-  const major = new THREE.GridHelper(gs * 2, Math.round(gs / 5) * 2 || 2, "#3a3f47", "#3a3f47");
-  for (const gh of [minor, major]) { gh.rotation.x = Math.PI / 2; gh.position.set(cx, cy, 0.002); gridGroup.add(gh); }
-  // Rhino-style world axes
-  gridGroup.add(axisLine("#c0392b", new THREE.Vector3(gs, 0, 0.01)));
-  gridGroup.add(axisLine("#2e8b3a", new THREE.Vector3(0, gs, 0.01)));
-  scene.add(gridGroup);
+  Object.assign(world, { cx, cy, h: lv, r: size + 20 });
+  const r = world.r;
+  Object.assign(key.shadow.camera, { left: -r * 1.2, right: r * 1.2, top: r * 1.2, bottom: -r * 1.2, near: 1, far: r * 6 });
+  key.shadow.camera.updateProjectionMatrix();
+  stars.position.set(cx, cy, 0);
 }
 frame(12, 12, 18);
+
+// Post-processing: bloom for the glowing windows and a soft sheen by day
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.3, 0.35, 1.0);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
 
 function resize() {
   const w = container.clientWidth, h = container.clientHeight;
   renderer.setSize(w, h, false);
   renderer.domElement.style.width = w + "px"; renderer.domElement.style.height = h + "px";
+  composer.setPixelRatio(renderer.getPixelRatio());
+  composer.setSize(w, h);
+  bloom.resolution.set(w / 2, h / 2);
   camera.aspect = w / h; camera.updateProjectionMatrix();
 }
 new ResizeObserver(resize).observe(container);
 resize();
 
+// ---------- Day / night ----------
+// t in [0,1): 0 = sunrise (06:00), 0.25 = noon, 0.5 = sunset, 0.75 = midnight
+const sky = {
+  mode: "cycle", t: 0.3, night: 0,
+  day: new THREE.Color("#e4eefb"), dusk: new THREE.Color("#ffb877"), deep: new THREE.Color("#06080d"),
+  sunLow: new THREE.Color("#ff9a5a"), sunHigh: new THREE.Color("#fff4e2"), moon: new THREE.Color("#9fb4ff"),
+  hemiDay: new THREE.Color("#dfe9ff"), hemiNight: new THREE.Color("#3a4a6e"),
+};
+const FIXED_T = { day: 0.3, night: 0.8 };
+const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const _c = new THREE.Color(), _d = new THREE.Vector3();
+
+function updateSky(dt) {
+  if (sky.mode === "cycle") {
+    sky.t = (sky.t + dt / +inputs.cycle.value) % 1;
+  } else {
+    // glide quickly to the chosen time of day, always moving forward
+    const target = FIXED_T[sky.mode];
+    const dist = (target - sky.t + 1) % 1;
+    if (dist < 0.002 || dist > 0.95) sky.t = target;           // already there (or just past it)
+    else sky.t = (sky.t + Math.min(dist, dt * 0.12)) % 1;
+  }
+  const th = sky.t * Math.PI * 2, elev = Math.sin(th);
+  const daySky = smooth(-0.25, 0.35, elev);
+  const duskW = Math.exp(-Math.pow(elev / 0.2, 2));
+  sky.night = 1 - smooth(-0.12, 0.12, elev);
+
+  // background + fog
+  _c.copy(sky.deep).lerp(sky.day, daySky).lerp(sky.dusk, duskW * 0.85);
+  scene.background.copy(_c); scene.fog.color.copy(_c);
+
+  // key light: sun above the horizon, moon below it
+  const R = world.r * 2.2;
+  let strength;
+  if (elev >= 0) {
+    _d.set(Math.cos(th), -0.45, Math.max(elev, 0.02)).normalize();
+    strength = smooth(0, 0.22, elev);
+    key.color.copy(sky.sunLow).lerp(sky.sunHigh, smooth(0.05, 0.6, elev));
+    key.intensity = 2.6 * strength;
+  } else {
+    _d.set(-Math.cos(th), 0.45, Math.max(-elev, 0.02)).normalize();
+    strength = 0.55 * smooth(0, 0.22, -elev);
+    key.color.copy(sky.moon);
+    key.intensity = 0.9 * strength;
+  }
+  key.position.set(world.cx + _d.x * R, world.cy + _d.y * R, _d.z * R);
+  key.target.position.set(world.cx, world.cy, 0);
+  ground.material.opacity = 0.5 * Math.min(1, strength * 1.3);
+
+  rim.position.set(world.cx - _d.x * R, world.cy - _d.y * R, world.h + R * 0.4);
+  rim.target.position.set(world.cx, world.cy, world.h * 0.5);
+  rim.intensity = 0.25 + 0.35 * sky.night;
+
+  hemi.color.copy(sky.hemiNight).lerp(sky.hemiDay, daySky).lerp(sky.sunLow, duskW * 0.6);
+  hemi.intensity = 0.22 + 0.9 * daySky + 0.45 * duskW;   // warm fill around sunset
+  renderer.toneMappingExposure = 0.95 + 0.15 * daySky + 0.1 * duskW;
+
+  // tower glows faintly after dark, lit windows brighten
+  layers[0].mat.emissiveIntensity = 0.12 + 0.06 * sky.night;
+  litLayer.mat.color.setScalar(0.8 + 1.7 * sky.night);
+  stars.material.opacity = 0.9 * smooth(0.3, 0.9, sky.night);
+
+  bloom.enabled = inputs.glow.checked;
+  bloom.strength = 0.55 * sky.night;
+  bloom.threshold = 1.0;
+}
+
+function clockText() {
+  const hrs = (6 + sky.t * 24) % 24;
+  const hh = Math.floor(hrs), mm = Math.floor((hrs - hh) * 60 / 10) * 10;
+  const icon = Math.sin(sky.t * Math.PI * 2) >= 0 ? "☀" : "☾";
+  return `${icon} ${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+}
+
+// Which tower cubes are lit at night: a stable random subset that slowly flickers
+function hash3(x, y, z, s) {
+  let h = Math.imul(x | 0, 73856093) ^ Math.imul(y | 0, 19349663) ^ Math.imul(z | 0, 83492791) ^ Math.imul(s | 0, 2654435761);
+  h = Math.imul(h ^ (h >>> 15), 0x5bd1e995); h ^= h >>> 13; h = Math.imul(h, 0x27d4eb2d); h ^= h >>> 15;
+  return (h >>> 0) / 4294967296;
+}
+function splitWindows(boxes, nowSec, grid) {
+  const frac = 0.16 * smooth(0.15, 0.9, sky.night);
+  if (frac <= 0.001 || !grid) return [boxes, []];
+  const unlit = [], lit = [];
+  const A = (x, y, z) => grid.alive(x, y, z);
+  for (const b of boxes) {
+    const { ix: x, iy: y, iz: z } = b;
+    // only cubes on the sides of the tower: at least one open side, and covered from above (no roof cubes)
+    const side = !A(x + 1, y, z) || !A(x - 1, y, z) || !A(x, y + 1, z) || !A(x, y - 1, z);
+    if (!side || !A(x, y, z + 1)) { unlit.push(b); continue; }
+    const epoch = Math.floor(nowSec / 6 + hash3(b.ix, b.iy, b.iz, 7) * 6);
+    // each cube has its own "switch-on" threshold, so windows turn on gradually at dusk
+    if (hash3(b.ix, b.iy, b.iz, epoch) < frac) lit.push(b); else unlit.push(b);
+  }
+  return [unlit, lit];
+}
+const windowColor = b => WINDOW_COLORS[Math.floor(hash3(b.ix, b.iy, b.iz, 3) * WINDOW_COLORS.length)];
+
+// ---------- Axis gizmo (bottom-right) ----------
+const axScene = new THREE.Scene();
+const axCam = new THREE.OrthographicCamera(-1.55, 1.55, 1.55, -1.55, 0.1, 20);
+axCam.up.set(0, 0, 1);
+function axisLabel(text, color) {
+  const c = document.createElement("canvas"); c.width = c.height = 64;
+  const ctx = c.getContext("2d");
+  ctx.font = "bold 40px IBM Plex Sans, system-ui, sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = color; ctx.fillText(text, 32, 34);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, toneMapped: false }));
+  sp.scale.set(0.7, 0.7, 1);
+  return sp;
+}
+for (const [dir, color, name] of [
+  [new THREE.Vector3(1, 0, 0), "#ff5a4f", "X"],
+  [new THREE.Vector3(0, 1, 0), "#39e639", "Y"],
+  [new THREE.Vector3(0, 0, 1), "#4f8cff", "Z"],
+]) {
+  const mat = new THREE.MeshBasicMaterial({ color, toneMapped: false });
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.95, 8), mat);
+  const head = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.3, 12), mat);
+  shaft.position.y = 0.475; head.position.y = 1.05;
+  const g = new THREE.Group(); g.add(shaft, head);
+  g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+  axScene.add(g);
+  const lbl = axisLabel(name, color); lbl.position.copy(dir).multiplyScalar(1.45);
+  axScene.add(lbl);
+}
+const GIZMO = 120, _v = new THREE.Vector3();
+
+const clock = new THREE.Clock();
 (function render() {
+  const dt = Math.min(0.1, clock.getDelta());
   controls.update();
-  renderer.render(scene, camera);
+  updateSky(dt);
+  const w = container.clientWidth, h = container.clientHeight;
+  renderer.setViewport(0, 0, w, h);
+  composer.render();
+  // draw the gizmo on top, oriented like the main camera
+  _v.copy(camera.position).sub(controls.target).normalize().multiplyScalar(6);
+  axCam.position.copy(_v); axCam.lookAt(0, 0, 0);
+  renderer.autoClear = false;
+  renderer.clearDepth();
+  renderer.setScissorTest(true);
+  const x = w - GIZMO - 10, y = w < 760 ? 10 : 34;
+  renderer.setScissor(x, y, GIZMO, GIZMO); renderer.setViewport(x, y, GIZMO, GIZMO);
+  renderer.render(axScene, axCam);
+  renderer.setScissorTest(false);
+  renderer.autoClear = true;
   requestAnimationFrame(render);
 })();
 
@@ -975,6 +1170,14 @@ function toast(kind, html, ms = 1400) {
   toastTimer = setTimeout(() => t.classList.remove("show"), ms);
 }
 
+for (const btn of document.querySelectorAll("#lightMode button")) {
+  btn.onclick = () => {
+    sky.mode = btn.dataset.m;
+    document.querySelectorAll("#lightMode button").forEach(b => b.classList.toggle("on", b === btn));
+  };
+}
+setInterval(() => { $("hudClock").textContent = clockText(); }, 250);
+
 // ---------- Simulation loop ----------
 const sim = new Simulation();
 
@@ -984,7 +1187,11 @@ function loop() {
 
   for (const ev of sim.events) {
     if (ev.type === "gust") toast("gust", `Gust!<small>wind ×${ev.mul.toFixed(2)}</small>`);
-    else if (ev.type === "target") toast("win", `Target reached!<small>+${ev.bonus.toLocaleString()} bonus</small>`, 2400);
+    else if (ev.type === "move") {
+      if (ev.bonus) toast("win", `Target reached!<small>+${(ev.pts + ev.bonus).toLocaleString()} · ${ev.gained} new levels + bonus</small>`, 2600);
+      else if (ev.gained) toast("win", `+${ev.pts.toLocaleString()}<small>${ev.gained} new level${ev.gained === 1 ? "" : "s"} · height ${ev.height}</small>`, 1800);
+      else toast("gust", `+0<small>no new height (best ${sim.bestHeight})</small>`, 1800);
+    }
     else if (ev.type === "settled") {
       const top = Math.max(0, sim.height - 1);
       inputs.continueFromLevel.max = Math.max(60, top);
@@ -995,13 +1202,16 @@ function loop() {
 
   if (out) {
     if (needsFraming) { frame(p.width, p.length, Math.max(sim.targetLevel, sim.target)); needsFraming = false; }
-    writeLayer(layers[0], out.A); writeLayer(layers[1], out.B); writeLayer(layers[2], out.C);
+    const [towerBoxes, litBoxes] = splitWindows(out.A, performance.now() / 1000, sim.grid);
+    writeLayer(layers[0], towerBoxes); writeLayer(layers[1], out.B); writeLayer(layers[2], out.C);
+    writeLayer(litLayer, litBoxes, windowColor);
     const windLabel = sim.phase === PHASE.wind && p.stopWind ? "Wind (paused)" : PHASE_NAMES[sim.phase];
     $("hudPhase").textContent = windLabel;
     $("hudDot").style.background = PHASE_COLORS[sim.phase];
     $("hudLevel").textContent = sim.phase === PHASE.generate
       ? `building level ${Math.min(sim.currentLevel, sim.targetLevel)} / ${sim.targetLevel}`
       : `gusts ${sim.gusts} · best height ${sim.bestHeight}`;
+    $("movesVal").textContent = `moves ${sim.moves} · par ${sim.par}`;
     $("hudCounts").textContent = `tower ${out.A.length} · falling ${out.B.length} · rubble ${out.C.length}`;
   } else {
     layers.forEach(l => { l.mesh.count = 0; });

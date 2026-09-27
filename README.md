@@ -15,14 +15,21 @@ This started as a Grasshopper C# component. The web version keeps the original r
 
 ### Scoring
 
-- Every tick the wind blows, you earn points equal to the tower's current height.
-- The first time the settled tower reaches the target height, you get a bonus of target × 100.
-- **Stop wind** pauses the gusts and the scoring.
+Only your moves score. A move is **New game** (your first build) or **Continue growing**, and each one is scored once the tower has finished collapsing and settled.
+
+- **+100 per new level:** you only score height above the best height you've reached so far. Rebuilding levels the wind knocked off scores nothing.
+- **Target bonus:** the first move that settles at or above the target height earns target × 100.
+- **Par bonus:** par is target ÷ levels per build, rounded up, + 1. Each move under par adds 1,000.
+- The wind never gives points. It only takes height away.
 - Your best score is saved in your browser.
 
 ### Colours
 
-Tower is **cyan**, falling blocks are **amber** and rubble is **green**, which correspond to outputs A, B and C of the Grasshopper component.
+Tower is **cyan**, falling blocks are **amber** and rubble is **green**, which correspond to outputs A, B and C of the Grasshopper component. The axis icon in the bottom-right corner (X red, Y green, Z blue) turns with the camera.
+
+### Lighting
+
+Choose **Day**, **Night** or **Cycle** under *Lighting & display*. In Cycle the sun crosses the sky, the moon and stars come out, and after dusk random cubes on the tower's sides light up like windows and flicker on and off. The shadows are soft, and **Glow** adds a bloom effect to the lit windows. **Day length** sets how long a full day takes. The lighting is visual only and doesn't change the simulation.
 
 ## Controls and their Grasshopper inputs
 
