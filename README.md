@@ -21,7 +21,7 @@ Points come only from your moves (**New game** or **Continue growing**) and from
 
 - **+100 per new level** above your best height so far. Rebuilding lost height scores nothing.
 - **+500** the first time a settled build reaches the target.
-- **+2,000 for winning**, plus **1,000 per move under par**. Par is target ÷ levels per build, rounded up, + 1.
+- **+2,000 for winning**, plus **1,000 per move under the benchmark**. The benchmark is the number of builds a good player should need: target ÷ levels per build, rounded up, + 1 (3 with the default settings).
 - Your best score is saved in your browser.
 
 ### Wind
