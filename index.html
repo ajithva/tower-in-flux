@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tower in Flux</title>
 <meta name="description" content="A cellular-automaton tower game: grow a tower to the target height and keep it standing as the wind picks up.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%231b1d21%27/%3E%3Crect x=%275%27 y=%272%27 width=%276%27 height=%2712%27 fill=%27%2319e3f0%27/%3E%3Crect x=%272%27 y=%2711%27 width=%273%27 height=%273%27 fill=%27%23ffb300%27/%3E%3Crect x=%2711%27 y=%2711%27 width=%273%27 height=%273%27 fill=%27%2339e639%27/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%2315171a'/%3E%3Cpolygon%20points='12.09,18.59%2014.39,19.73%2014.39,22.61%2012.09,21.46'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,18.59%2014.39,19.73%2014.39,22.61%2016.69,21.46'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,17.44%2016.69,18.59%2014.39,19.73%2012.09,18.59'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,15.71%2014.39,16.86%2014.39,19.73%2012.09,18.59'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,15.71%2014.39,16.86%2014.39,19.73%2016.69,18.59'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,14.56%2016.69,15.71%2014.39,16.86%2012.09,15.71'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,7.10%2014.39,8.24%2014.39,11.12%2012.09,9.97'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,7.10%2014.39,8.24%2014.39,11.12%2016.69,9.97'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,5.95%2016.69,7.10%2014.39,8.24%2012.09,7.10'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,19.73%2016.69,20.88%2016.69,23.76%2014.39,22.61'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,19.73%2016.69,20.88%2016.69,23.76%2018.99,22.61'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,18.59%2018.99,19.73%2016.69,20.88%2014.39,19.73'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='9.80,19.73%2012.09,20.88%2012.09,23.76%209.80,22.61'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,19.73%2012.09,20.88%2012.09,23.76%2014.39,22.61'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,18.59%2014.39,19.73%2012.09,20.88%209.80,19.73'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='5.20,19.73%207.50,20.88%207.50,23.76%205.20,22.61'%20fill='%2339e639'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='9.80,19.73%207.50,20.88%207.50,23.76%209.80,22.61'%20fill='%231d861d'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='7.50,18.59%209.80,19.73%207.50,20.88%205.20,19.73'%20fill='%23a3f7a3'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,16.86%2016.69,18.01%2016.69,20.88%2014.39,19.73'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,16.86%2016.69,18.01%2016.69,20.88%2018.99,19.73'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,15.71%2018.99,16.86%2016.69,18.01%2014.39,16.86'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,13.99%2016.69,15.14%2016.69,18.01%2014.39,16.86'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,13.99%2016.69,15.14%2016.69,18.01%2018.99,16.86'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,12.84%2018.99,13.99%2016.69,15.14%2014.39,13.99'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='9.80,13.99%2012.09,15.14%2012.09,18.01%209.80,16.86'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,13.99%2012.09,15.14%2012.09,18.01%2014.39,16.86'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,12.84%2014.39,13.99%2012.09,15.14%209.80,13.99'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,11.12%2016.69,12.27%2016.69,15.14%2014.39,13.99'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,11.12%2016.69,12.27%2016.69,15.14%2018.99,13.99'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,9.97%2018.99,11.12%2016.69,12.27%2014.39,11.12'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,8.24%2016.69,9.39%2016.69,12.27%2014.39,11.12'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,8.24%2016.69,9.39%2016.69,12.27%2018.99,11.12'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,7.10%2018.99,8.24%2016.69,9.39%2014.39,8.24'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,5.37%2016.69,6.52%2016.69,9.39%2014.39,8.24'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,5.37%2016.69,6.52%2016.69,9.39%2018.99,8.24'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,4.22%2018.99,5.37%2016.69,6.52%2014.39,5.37'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,20.88%2018.99,22.03%2018.99,24.90%2016.69,23.76'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='21.29,20.88%2018.99,22.03%2018.99,24.90%2021.29,23.76'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,19.73%2021.29,20.88%2018.99,22.03%2016.69,20.88'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,20.88%2014.39,22.03%2014.39,24.90%2012.09,23.76'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,20.88%2014.39,22.03%2014.39,24.90%2016.69,23.76'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,19.73%2016.69,20.88%2014.39,22.03%2012.09,20.88'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='21.29,20.88%2023.58,22.03%2023.58,24.90%2021.29,23.76'%20fill='%2339e639'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='25.88,20.88%2023.58,22.03%2023.58,24.90%2025.88,23.76'%20fill='%231d861d'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='23.58,19.73%2025.88,20.88%2023.58,22.03%2021.29,20.88'%20fill='%23a3f7a3'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,18.01%2018.99,19.16%2018.99,22.03%2016.69,20.88'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='21.29,18.01%2018.99,19.16%2018.99,22.03%2021.29,20.88'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,16.86%2021.29,18.01%2018.99,19.16%2016.69,18.01'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,18.01%2014.39,19.16%2014.39,22.03%2012.09,20.88'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,18.01%2014.39,19.16%2014.39,22.03%2016.69,20.88'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,16.86%2016.69,18.01%2014.39,19.16%2012.09,18.01'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,15.14%2018.99,16.29%2018.99,19.16%2016.69,18.01'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='21.29,15.14%2018.99,16.29%2018.99,19.16%2021.29,18.01'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,13.99%2021.29,15.14%2018.99,16.29%2016.69,15.14'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='20.65,16.24%2019.62,16.76%2019.62,18.05%2020.65,17.54'%20fill='%23ffe0a0'/%3E%3Cpolygon%20points='12.09,15.14%2014.39,16.29%2014.39,19.16%2012.09,18.01'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,15.14%2014.39,16.29%2014.39,19.16%2016.69,18.01'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,13.99%2016.69,15.14%2014.39,16.29%2012.09,15.14'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,12.27%2014.39,13.41%2014.39,16.29%2012.09,15.14'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,12.27%2014.39,13.41%2014.39,16.29%2016.69,15.14'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,11.12%2016.69,12.27%2014.39,13.41%2012.09,12.27'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,9.39%2014.39,10.54%2014.39,13.41%2012.09,12.27'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,9.39%2014.39,10.54%2014.39,13.41%2016.69,12.27'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,8.24%2016.69,9.39%2014.39,10.54%2012.09,9.39'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,6.52%2014.39,7.67%2014.39,10.54%2012.09,9.39'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,6.52%2014.39,7.67%2014.39,10.54%2016.69,9.39'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,5.37%2016.69,6.52%2014.39,7.67%2012.09,6.52'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,3.65%2014.39,4.80%2014.39,7.67%2012.09,6.52'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,3.65%2014.39,4.80%2014.39,7.67%2016.69,6.52'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,2.50%2016.69,3.65%2014.39,4.80%2012.09,3.65'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='22.20,5.72%2024.50,6.87%2024.50,9.74%2022.20,8.59'%20fill='%23ffb300'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='26.80,5.72%2024.50,6.87%2024.50,9.74%2026.80,8.59'%20fill='%23bf7c00'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='24.50,4.57%2026.80,5.72%2024.50,6.87%2022.20,5.72'%20fill='%23ffdc8f'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,22.03%2016.69,23.18%2016.69,26.05%2014.39,24.90'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,22.03%2016.69,23.18%2016.69,26.05%2018.99,24.90'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,20.88%2018.99,22.03%2016.69,23.18%2014.39,22.03'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='9.80,22.03%2012.09,23.18%2012.09,26.05%209.80,24.90'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,22.03%2012.09,23.18%2012.09,26.05%2014.39,24.90'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,20.88%2014.39,22.03%2012.09,23.18%209.80,22.03'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,19.16%2016.69,20.31%2016.69,23.18%2014.39,22.03'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,19.16%2016.69,20.31%2016.69,23.18%2018.99,22.03'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,18.01%2018.99,19.16%2016.69,20.31%2014.39,19.16'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.36,20.27%2017.32,20.78%2017.32,22.07%2018.36,21.56'%20fill='%23ffe0a0'/%3E%3Cpolygon%20points='9.80,19.16%2012.09,20.31%2012.09,23.18%209.80,22.03'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,19.16%2012.09,20.31%2012.09,23.18%2014.39,22.03'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,18.01%2014.39,19.16%2012.09,20.31%209.80,19.16'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,16.29%2016.69,17.44%2016.69,20.31%2014.39,19.16'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,16.29%2016.69,17.44%2016.69,20.31%2018.99,19.16'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,15.14%2018.99,16.29%2016.69,17.44%2014.39,16.29'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,13.41%2016.69,14.56%2016.69,17.44%2014.39,16.29'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,13.41%2016.69,14.56%2016.69,17.44%2018.99,16.29'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,12.27%2018.99,13.41%2016.69,14.56%2014.39,13.41'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='9.80,13.41%2012.09,14.56%2012.09,17.44%209.80,16.29'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,13.41%2012.09,14.56%2012.09,17.44%2014.39,16.29'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,12.27%2014.39,13.41%2012.09,14.56%209.80,13.41'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,10.54%2016.69,11.69%2016.69,14.56%2014.39,13.41'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,10.54%2016.69,11.69%2016.69,14.56%2018.99,13.41'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,9.39%2018.99,10.54%2016.69,11.69%2014.39,10.54'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='9.80,10.54%2012.09,11.69%2012.09,14.56%209.80,13.41'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,10.54%2012.09,11.69%2012.09,14.56%2014.39,13.41'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,9.39%2014.39,10.54%2012.09,11.69%209.80,10.54'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='10.43,11.65%2011.46,12.17%2011.46,13.46%2010.43,12.94'%20fill='%23ffe0a0'/%3E%3Cpolygon%20points='14.39,7.67%2016.69,8.82%2016.69,11.69%2014.39,10.54'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='18.99,7.67%2016.69,8.82%2016.69,11.69%2018.99,10.54'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,6.52%2018.99,7.67%2016.69,8.82%2014.39,7.67'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,23.18%2014.39,24.33%2014.39,27.20%2012.09,26.05'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,23.18%2014.39,24.33%2014.39,27.20%2016.69,26.05'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,22.03%2016.69,23.18%2014.39,24.33%2012.09,23.18'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,20.31%2014.39,21.46%2014.39,24.33%2012.09,23.18'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,20.31%2014.39,21.46%2014.39,24.33%2016.69,23.18'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,19.16%2016.69,20.31%2014.39,21.46%2012.09,20.31'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,17.44%2014.39,18.59%2014.39,21.46%2012.09,20.31'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,17.44%2014.39,18.59%2014.39,21.46%2016.69,20.31'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,16.29%2016.69,17.44%2014.39,18.59%2012.09,17.44'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,14.56%2014.39,15.71%2014.39,18.59%2012.09,17.44'%20fill='%2319e3f0'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,14.56%2014.39,15.71%2014.39,18.59%2016.69,17.44'%20fill='%230a8f9a'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,13.41%2016.69,14.56%2014.39,15.71%2012.09,14.56'%20fill='%239af6fb'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='12.09,25.48%2014.39,26.63%2014.39,29.50%2012.09,28.35'%20fill='%2339e639'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='16.69,25.48%2014.39,26.63%2014.39,29.50%2016.69,28.35'%20fill='%231d861d'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3Cpolygon%20points='14.39,24.33%2016.69,25.48%2014.39,26.63%2012.09,25.48'%20fill='%23a3f7a3'%20stroke='%23101216'%20stroke-width='0.45'%20stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -74,6 +74,15 @@
   .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; transition: width .25s; }
   #heightBar { background: var(--tower); }
   #heightBar.done { background: var(--rubble); }
+  .pips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .pips i { height: 8px; border-radius: 4px; background: #2a2e34; transition: background .3s; }
+  .pips i.on { background: var(--rubble); }
+  .pips.active i:not(.on) { background: #1d3b3e; }
+  .win-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 18px 0 4px; }
+  .win-stats div { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .win-stats b { display: block; font-family: "IBM Plex Mono", monospace; font-size: 22px; color: var(--ink); }
+  .win-stats span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .win-big { font-size: 40px !important; letter-spacing: -0.02em; }
   #windBar { background: linear-gradient(90deg, var(--falling), var(--danger)); }
   .toast { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(.9); padding: 14px 22px; border-radius: 12px;
     font-weight: 700; font-size: 22px; letter-spacing: .02em; pointer-events: none; opacity: 0; transition: opacity .25s, transform .25s; text-align: center; }
@@ -171,6 +180,10 @@
           <div class="bar"><i id="heightBar" style="width:0%"></i></div>
         </div>
         <div class="meter">
+          <div class="top"><span>Hold</span><span id="holdTxt">reach the target</span></div>
+          <div class="pips" id="pips"><i></i><i></i><i></i></div>
+        </div>
+        <div class="meter">
           <div class="top"><span>Wind</span><span id="windTxt">×1.00</span></div>
           <div class="bar"><i id="windBar" style="width:0%"></i></div>
         </div>
@@ -192,16 +205,37 @@
     <div class="kicker">A cellular automaton game</div>
     <h2 id="introTitle">Tower in Flux</h2>
     <p>The tower here isn't designed. It grows from simple local rules: each new block appears or doesn't depending on how many neighbours it has on the level below. Blocks with nothing under them fall, pile up as rubble, and can become ground for more building. Once the tower settles, the wind starts, and it gets stronger in random gusts.</p>
-    <p><b>Your goal:</b> get the tower up to the <b class="c-t">target height</b>, then keep it standing for as long as you can.</p>
+    <p><b>Your goal:</b> get the tower up to the <b class="c-t">target height</b>, then keep it there through <b>3 gusts</b> without building. Do that and you win.</p>
     <div class="steps">
       <div class="step"><div class="n">1</div><p><b>Tune the rules.</b> Choose the grid size, seed, density and growth rules. They decide how solid or lacy the tower comes out.</p></div>
       <div class="step"><div class="n">2</div><p><b>Press New game.</b> The tower grows level by level, then anything unsupported <span class="c-f">falls</span> and lands as <span class="c-r">rubble</span>.</p></div>
       <div class="step"><div class="n">3</div><p><b>Keep building.</b> While the wind is blowing, press <b>Continue growing</b> to add more levels on top, until you pass the target.</p></div>
-      <div class="step"><div class="n">4</div><p><b>Score with each move.</b> A build scores when the tower settles: 100 points for each new level above your best. Reaching the target earns a bonus, and a bigger one if you get there in fewer moves. Gusts can knock height off, and height you rebuild scores nothing.</p></div>
+      <div class="step"><div class="n">4</div><p><b>Hold it through 3 gusts.</b> Once a build settles at the target, stop building and survive 3 gusts. If the tower drops below the target, build back up and try again. Fewer moves earn a bigger win bonus.</p></div>
     </div>
     <div class="actions">
       <button class="primary" id="introPlay">Play</button>
       <button id="introHelp">How it works</button>
+    </div>
+  </div>
+</div>
+
+<!-- Win -->
+<div class="modal" id="win" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+  <div class="sheet" style="max-width:520px">
+    <div class="kicker" style="color:var(--rubble)">Challenge complete</div>
+    <h2 id="winTitle" class="win-big">Successful! You did it.</h2>
+    <p>Your tower reached the target and held it through 3 gusts.</p>
+    <div class="win-stats">
+      <div><span>Score</span><b id="wScore">0</b></div>
+      <div><span>Moves</span><b id="wMoves">0</b></div>
+      <div><span>Height</span><b id="wHeight">0</b></div>
+      <div><span>Time</span><b id="wTime">0s</b></div>
+    </div>
+    <p id="wBonus" style="margin-top:12px"></p>
+    <div class="actions">
+      <button class="primary" id="winAgain">Play again</button>
+      <button id="winKeep">Keep playing</button>
+      <button id="winReset">Reset</button>
     </div>
   </div>
 </div>
@@ -232,15 +266,16 @@
     </ul>
 
     <h3>Gusts</h3>
-    <p>While the wind blows, it picks up in random gusts every few seconds, each adding 10–40% more strength, up to ×4. Tall, thin and exposed blocks go first. Only New game or Reset brings the wind back down.</p>
+    <p>While the wind blows, it picks up in random gusts every few seconds, each adding 10–40% more strength, up to ×4. Cubes visibly lean with the wind, and when one leans too far it snaps off and falls. Rubble piles stay put, but loose blocks on top can still be blown off. Tall, thin and exposed blocks go first. Only New game or Reset brings the wind back down.</p>
 
     <h3>Scoring</h3>
-    <p>Only your moves score. A move is <b>New game</b> (your first build) or <b>Continue growing</b>. Each one is scored once the tower has finished collapsing and settled.</p>
+    <p><b>To win:</b> reach the target height with a settled build, then hold it through <b>3 gusts in a row</b> without building. The score card counts the gusts you've held. If a gust knocks the tower below the target, the count resets, and so does building while you're holding.</p>
+    <p>Points come only from your moves (<b>New game</b> or <b>Continue growing</b>) and from winning:</p>
     <ul>
-      <li><b>+100 per new level:</b> you only score height above the best height you've reached so far. If the wind knocked levels off, rebuilding them scores nothing.</li>
-      <li><b>Target bonus:</b> the first move that settles at or above the target height earns target × 100.</li>
-      <li><b>Par bonus:</b> par is the number of builds you'd expect to need (target ÷ levels per build, rounded up, + 1). Each move under par adds 1,000.</li>
-      <li>The wind never gives points. It only takes height away, which makes your next move harder.</li>
+      <li><b>+100 per new level</b> above your best height so far. Rebuilding lost height scores nothing.</li>
+      <li><b>+500</b> the first time a settled build reaches the target.</li>
+      <li><b>+2,000 for winning</b>, plus <b>1,000 per move under par</b>. Par is target ÷ levels per build, rounded up, + 1.</li>
+      <li>After winning you can keep playing for a higher score, or start again.</li>
       <li>Your best score is saved in this browser.</li>
     </ul>
 
@@ -344,6 +379,11 @@ function boxAt(x, y, z, scale, sway, windY) {
     : { cx: x + sway, cy: y, cz: z + 0.5, sx: scale, sy: scale, ix: x, iy: y, iz: z };
 }
 
+// Visible lean: the physics sway is mapped so a cube leans at most VIS_MAX of a cube,
+// reaching that exactly at the break threshold, so nothing ever looks like it floats.
+const VIS_MAX = 0.3;
+function visSway(s, thr) { const v = (s / thr) * VIS_MAX; return v > VIS_MAX ? VIS_MAX : v < -VIS_MAX ? -VIS_MAX : v; }
+
 function swayFactorFor(n) { let f = 1.0 - n * 0.12; return f < 0.1 ? 0.1 : f; }
 
 function dampen(sway, x, y, z, windY, test) {
@@ -360,6 +400,7 @@ class CAGrid {
     this.Width = width; this.Length = length; this.Levels = levels;
     this.RubbleExtent = 5; this.Maxstack = 3;
     this.cells = new Map();
+    this.visThr = 1.5;
   }
   has(x, y, z) { return this.cells.has(K(x, y, z)); }
   alive(x, y, z) { return this.cells.get(K(x, y, z)) === true; }
@@ -558,7 +599,7 @@ class CAGrid {
       let sway = 0;
       if (lz >= windHeight) {
         sway = windOffset * (lz - windHeight + 1) * swayFactorFor(this.neighbours(lx, ly, lz));
-        sway = dampen(sway, lx, ly, lz, windY, isAlive);
+        sway = visSway(dampen(sway, lx, ly, lz, windY, isAlive), this.visThr);
       }
       let scale = 1;
       if (taper) { scale = 1 - lz * 0.02; if (scale < 0.4) scale = 0.4; }
@@ -571,7 +612,7 @@ class CAGrid {
     const boxes = [];
     for (const fb of falling.arr) {
       let s = 0;
-      if (fb.z >= windHeight) s = windFallOffset * (fb.z - windHeight + 1) * swayFactorFor(this.neighbours(fb.x, fb.y, fb.z));
+      if (fb.z >= windHeight) s = visSway(windFallOffset * (fb.z - windHeight + 1) * swayFactorFor(this.neighbours(fb.x, fb.y, fb.z)), this.visThr);
       boxes.push(boxAt(fb.x, fb.y, fb.z, 1, s, windY));
     }
     return boxes;
@@ -596,15 +637,8 @@ class CAGrid {
     const toRemove = [];
     for (const r of rubble.arr) {
       if (this.alive(r.x, r.y, r.z)) { toRemove.push(r); continue; }
-      let sway = 0;
-      if (r.z >= windHeight) {
-        let rn = 0;
-        for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++)
-          if (!(dx === 0 && dy === 0) && rubble.has(r.x + dx, r.y + dy, r.z)) rn++;
-        sway = windOffset * (r.z - windHeight + 1) * swayFactorFor(rn);
-        sway = dampen(sway, r.x, r.y, r.z, windY, inRubble);
-      }
-      boxes.push(boxAt(r.x, r.y, r.z, taperScale(r.x, r.y, r.z), sway, windY));
+      // rubble piles sit still (wind can still blow loose blocks off the top, see windInstabilityCheck)
+      boxes.push(boxAt(r.x, r.y, r.z, taperScale(r.x, r.y, r.z), 0, windY));
     }
     rubble.removeMany(toRemove);
 
@@ -617,7 +651,7 @@ class CAGrid {
       let sway = 0;
       if (oz >= windHeight) {
         sway = windOffset * (oz - windHeight + 1) * swayFactorFor(this.neighbours(ox, oy, oz));
-        sway = dampen(sway, ox, oy, oz, windY, isAlive);
+        sway = visSway(dampen(sway, ox, oy, oz, windY, isAlive), this.visThr);
       }
       boxes.push(boxAt(ox, oy, oz, taperScale(ox, oy, oz), sway, windY));
     }
@@ -625,6 +659,11 @@ class CAGrid {
   }
 }
 const PHASE = { idle: 0, generate: 1, falling: 2, wind: 3 };
+// Challenge rules
+const HOLD_GUSTS = 3;        // gusts the tower must survive at or above the target
+const TARGET_BONUS = 500;    // first time a settled build reaches the target
+const WIN_BONUS = 2000;      // for holding the target through HOLD_GUSTS gusts
+const PAR_BONUS = 1000;      // per move under par, added when you win
 
 class Simulation {
   constructor() {
@@ -642,6 +681,7 @@ class Simulation {
     this.score = 0; this.target = target; this.height = 0; this.bestHeight = 0;
     this.targetReached = false; this.windMul = 1; this.gusts = 0;
     this.moves = 0; this.par = 0; this.moveOpen = false;
+    this.holding = false; this.holdGusts = 0; this.gustEval = 0; this.won = false; this.startMs = Date.now();
     this.gustIn = 50 + this.rnd.next(50);
     this.events = [];
   }
@@ -650,7 +690,7 @@ class Simulation {
   tick(p) {
     const seedX = Math.floor(p.width / 2), seedY = Math.floor(p.length / 2);
     const windHeight = Math.floor((p.levels * 7) / 10);
-    const windThreshold = 0.6 + p.levels * 0.05;
+    const windThreshold = 0.5 + p.levels * 0.045;
     const maxStack = 2 + Math.floor(p.levels / 5);
     const rubbleExtent = 3 + Math.floor(p.levels / 2);
     const rubble = this.rubble, falling = this.falling;
@@ -671,7 +711,7 @@ class Simulation {
       this.par = Math.ceil(p.target / p.levels) + 1;
     }
     const g = this.grid;
-    if (g) { g.RubbleExtent = rubbleExtent; g.Maxstack = maxStack; }
+    if (g) { g.RubbleExtent = rubbleExtent; g.Maxstack = maxStack; g.visThr = windThreshold; }
 
     // Gusts: while the wind blows, strength ramps up at random intervals
     if (g && this.phase === PHASE.wind && !p.stopWind && p.gusts) {
@@ -682,6 +722,7 @@ class Simulation {
         this.gustIn = 40 + this.rnd.next(60);
         this.windCheckcooldown = Math.min(this.windCheckcooldown, 3);
         this.events.push({ type: "gust", mul: this.windMul });
+        if (this.holding && !this.won) this.gustEval = 30;   // judge this gust ~3 s later, once any collapse has settled
       }
     }
     const windStrength = (0.05 + p.levels * 0.02) * this.windMul;
@@ -697,6 +738,7 @@ class Simulation {
       g.reseedLevel(from, p.seed + from, p.density, rubble, p.useRubble);
       this.currentLevel = from + 1; this.targetLevel = newTarget; this.phase = PHASE.generate;
       this.moves++; this.moveOpen = true;
+      this.holding = false; this.holdGusts = 0; this.gustEval = 0;   // building restarts the hold
     }
 
     if (this.phase === PHASE.generate && g) {
@@ -756,15 +798,33 @@ class Simulation {
         const gained = Math.max(0, h - this.bestHeight);
         if (h > this.bestHeight) this.bestHeight = h;
         let bonus = 0;
-        if (!this.targetReached && h >= this.target) {
-          this.targetReached = true;
-          bonus = this.target * 100 + Math.max(0, this.par - this.moves) * 1000;
+        if (h >= this.target && !this.won) {
+          if (!this.targetReached) { this.targetReached = true; bonus = TARGET_BONUS; }
+          this.holding = true; this.holdGusts = 0; this.gustEval = 0;
         }
         const pts = gained * 100;
         this.score += pts + bonus;
-        this.events.push({ type: "move", gained, pts, bonus, height: h });
+        this.events.push({ type: "move", gained, pts, bonus, height: h, holding: this.holding });
       }
       this.events.push({ type: "settled" });
+    }
+
+    // Holding the target: judge each gust once the tower has settled after it
+    if (this.gustEval > 0 && this.phase === PHASE.wind && !p.stopWind) {
+      if (--this.gustEval === 0) {
+        if (h >= this.target) {
+          this.holdGusts++;
+          if (this.holdGusts >= HOLD_GUSTS) {
+            this.won = true; this.holding = false;
+            const bonus = WIN_BONUS + Math.max(0, this.par - this.moves) * PAR_BONUS;
+            this.score += bonus;
+            this.events.push({ type: "win", bonus, secs: Math.round((Date.now() - this.startMs) / 1000) });
+          } else this.events.push({ type: "hold", n: this.holdGusts });
+        } else {
+          this.holding = false; this.holdGusts = 0;
+          this.events.push({ type: "holdLost", height: h });
+        }
+      }
     }
 
     return {
@@ -874,6 +934,10 @@ document.getElementById("introPlay").onclick = () => closeModal(intro);
 document.getElementById("introHelp").onclick = () => { closeModal(intro); openModal(help); };
 document.getElementById("btnHelp").onclick = () => openModal(help);
 document.getElementById("helpClose").onclick = () => closeModal(help);
+const winM = document.getElementById("win");
+document.getElementById("winKeep").onclick = () => closeModal(winM);
+document.getElementById("winAgain").onclick = () => { closeModal(winM); pending.startGen = true; needsFraming = true; };
+document.getElementById("winReset").onclick = () => { closeModal(winM); pending.restart = true; };
 for (const m of [intro, help]) m.addEventListener("click", e => { if (e.target === m) closeModal(m); });
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") { closeModal(intro); closeModal(help); }
@@ -1187,8 +1251,20 @@ function loop() {
 
   for (const ev of sim.events) {
     if (ev.type === "gust") toast("gust", `Gust!<small>wind ×${ev.mul.toFixed(2)}</small>`);
+    else if (ev.type === "hold") toast("win", `Held! ${ev.n} / ${HOLD_GUSTS}<small>still at or above the target</small>`, 1800);
+    else if (ev.type === "holdLost") toast("gust", `Below the target<small>height ${ev.height}, so build back up and hold again</small>`, 2400);
+    else if (ev.type === "win") {
+      $("wScore").textContent = sim.score.toLocaleString();
+      $("wMoves").textContent = `${sim.moves} / par ${sim.par}`;
+      $("wHeight").textContent = `${sim.height} / ${sim.target}`;
+      $("wTime").textContent = ev.secs >= 60 ? `${Math.floor(ev.secs / 60)}m ${ev.secs % 60}s` : `${ev.secs}s`;
+      const under = Math.max(0, sim.par - sim.moves);
+      $("wBonus").textContent = `+${ev.bonus.toLocaleString()} win bonus` + (under ? ` (including ${under} move${under > 1 ? "s" : ""} under par)` : "");
+      openModal(winM);
+    }
     else if (ev.type === "move") {
-      if (ev.bonus) toast("win", `Target reached!<small>+${(ev.pts + ev.bonus).toLocaleString()} · ${ev.gained} new levels + bonus</small>`, 2600);
+      if (ev.bonus) toast("win", `Target reached!<small>+${(ev.pts + ev.bonus).toLocaleString()}, so now hold it through ${HOLD_GUSTS} gusts</small>`, 2800);
+      else if (ev.holding) toast("win", `+${ev.pts.toLocaleString()}<small>at the target again, so hold it through ${HOLD_GUSTS} gusts</small>`, 2200);
       else if (ev.gained) toast("win", `+${ev.pts.toLocaleString()}<small>${ev.gained} new level${ev.gained === 1 ? "" : "s"} · height ${ev.height}</small>`, 1800);
       else toast("gust", `+0<small>no new height (best ${sim.bestHeight})</small>`, 1800);
     }
@@ -1231,6 +1307,12 @@ function loop() {
   $("heightBar").style.width = `${Math.min(100, (sim.height / target) * 100)}%`;
   $("heightBar").classList.toggle("done", sim.targetReached);
   $("windTxt").textContent = `×${sim.windMul.toFixed(2)}`;
+  const pips = $("pips").children;
+  for (let i = 0; i < pips.length; i++) pips[i].classList.toggle("on", sim.won || i < sim.holdGusts);
+  $("pips").classList.toggle("active", sim.holding);
+  $("holdTxt").textContent = sim.won ? "✓ won"
+    : sim.holding ? (p.gusts ? `gust ${sim.holdGusts} / ${HOLD_GUSTS}` : "turn on gusts")
+    : sim.targetReached ? "build back up" : "reach the target";
   $("windBar").style.width = `${((sim.windMul - 1) / 3) * 100}%`;
 
   btnContinue.disabled = !(sim.grid && sim.phase === PHASE.wind);

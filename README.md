@@ -13,15 +13,20 @@ This started as a Grasshopper C# component. The web version keeps the original r
 3. While the wind blows, press **Continue growing** to add more levels on top. The starting level moves to the top of the tower each time it settles.
 4. Survive the gusts. Every few seconds the wind gets 10–40% stronger, up to ×4.
 
-### Scoring
+### Winning and scoring
 
-Only your moves score. A move is **New game** (your first build) or **Continue growing**, and each one is scored once the tower has finished collapsing and settled.
+**To win:** reach the target height with a settled build, then hold it through **3 gusts in a row** without building. If a gust knocks the tower below the target, the count resets. When you win, a "Successful! You did it." panel lets you keep playing, play again or reset.
 
-- **+100 per new level:** you only score height above the best height you've reached so far. Rebuilding levels the wind knocked off scores nothing.
-- **Target bonus:** the first move that settles at or above the target height earns target × 100.
-- **Par bonus:** par is target ÷ levels per build, rounded up, + 1. Each move under par adds 1,000.
-- The wind never gives points. It only takes height away.
+Points come only from your moves (**New game** or **Continue growing**) and from winning:
+
+- **+100 per new level** above your best height so far. Rebuilding lost height scores nothing.
+- **+500** the first time a settled build reaches the target.
+- **+2,000 for winning**, plus **1,000 per move under par**. Par is target ÷ levels per build, rounded up, + 1.
 - Your best score is saved in your browser.
+
+### Wind
+
+Gusts make the wind 10–40% stronger every few seconds, up to ×4. Cubes visibly lean with the wind, never more than about a third of a cube, and when one leans too far it snaps off and falls. Rubble piles stay put, but loose blocks on top can still be blown off.
 
 ### Colours
 
