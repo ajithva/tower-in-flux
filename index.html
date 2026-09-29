@@ -147,11 +147,11 @@
       <button id="btnSeed">Random seed</button>
     </div>
     <p class="hint">Pick the grid and rules, then press New game. The wind starts once the tower settles.</p>
-
-    <section id="secChallenge"><h2>Challenge</h2></section>
-    <section id="secContinue"><h2>Keep building</h2>
+    <section id="secContinue" style="margin-top:12px">
       <p class="hint" style="margin:0 0 10px">While the wind is blowing, add more levels on top. The starting level jumps to the top of the tower each time it settles.</p>
     </section>
+
+    <section id="secChallenge"><h2>Challenge</h2></section>
     <section id="secSetup"><h2>Grid</h2></section>
     <section id="secRules"><h2>Growth rules</h2></section>
     <section id="secEnv"><h2>Wind &amp; rubble</h2></section>
@@ -184,6 +184,10 @@
           <div class="pips" id="pips"><i></i><i></i><i></i></div>
         </div>
         <div class="meter">
+          <div class="top"><span>Stability</span><span id="stabTxt">–</span></div>
+          <div class="bar"><i id="stabBar" style="width:0%"></i></div>
+        </div>
+        <div class="meter">
           <div class="top"><span>Wind</span><span id="windTxt">×1.00</span></div>
           <div class="bar"><i id="windBar" style="width:0%"></i></div>
         </div>
@@ -209,7 +213,7 @@
     <div class="steps">
       <div class="step"><div class="n">1</div><p><b>Tune the rules.</b> Choose the grid size, seed, density and growth rules. They decide how solid or lacy the tower comes out.</p></div>
       <div class="step"><div class="n">2</div><p><b>Press New game.</b> The tower grows level by level, then anything unsupported <span class="c-f">falls</span> and lands as <span class="c-r">rubble</span>.</p></div>
-      <div class="step"><div class="n">3</div><p><b>Keep building.</b> While the wind is blowing, press <b>Continue growing</b> to add more levels on top, until you pass the target.</p></div>
+      <div class="step"><div class="n">3</div><p><b>Keep building.</b> While the wind is blowing, press <b>Build further</b> to add more levels on top, until you pass the target.</p></div>
       <div class="step"><div class="n">4</div><p><b>Hold it through 3 gusts.</b> Once a build settles at the target, stop building and survive 3 gusts. If the tower drops below the target, build back up and try again. Beating the move benchmark earns a bigger win bonus.</p></div>
     </div>
     <div class="actions">
@@ -266,11 +270,13 @@
     </ul>
 
     <h3>Gusts</h3>
-    <p>While the wind blows, it picks up in random gusts every few seconds, each adding 10–40% more strength, up to ×4. Cubes visibly lean with the wind, and when one leans too far it snaps off and falls. Rubble piles stay put, but loose blocks on top can still be blown off. Tall, thin and exposed blocks go first. Only New game or Reset brings the wind back down.</p>
+    <p>While the wind blows, it picks up in random gusts every few seconds, each adding 10–30% more strength, up to ×3. Cubes visibly lean with the wind, and when one leans too far it snaps off and falls. Rubble piles stay put, but loose blocks on top can still be blown off. The wind gets stronger the higher you go, so every extra level catches more of it. Tall, thin and exposed blocks go first. Each new build halves the extra wind.</p>
+    <p><b>Stability.</b> The tower behaves like a simple real structure. A floor's stiffness depends on <i>where</i> its cubes are: cubes far from the middle stiffen it most, like the frame of a tube skyscraper, so a hollow ring can be as strong as a solid block. Each floor also carries the wind on every floor above it, so wide bases and tapering tops help, while thin "necks" and top-heavy floors hurt. Gaps let some wind through, a cube resting on another cube is braced by it, cubes on an unbroken column from the ground (a spine) are anchored, and cubes with nothing directly beneath them are weaker. When edge cubes snap, the ones behind them are exposed next, so a tower erodes from the outside in. Exposed cubes also slowly wear out under repeated gusts.</p>
+    <p>The <b>Stability</b> meter rates the top of your tower: <b>Solid</b> (holds its height even in the strongest gusts, and never wears out), <b>Steady</b> (only the strongest gusts cost it levels) or <b>Shaky</b> (even mild gusts do), and names the shape it sees: tapered, tube, lattice, spine or top-heavy. A number like <b>−4</b> means a gust would erode about 4 levels off the top, so build that much above the target or make the tower wider and stiffer.</p>
 
     <h3>Scoring</h3>
     <p><b>To win:</b> reach the target height with a settled build, then hold it through <b>3 gusts in a row</b> without building. The score card counts the gusts you've held. If a gust knocks the tower below the target, the count resets, and so does building while you're holding.</p>
-    <p>Points come only from your moves (<b>New game</b> or <b>Continue growing</b>) and from winning:</p>
+    <p>Points come only from your moves (<b>New game</b> or <b>Build further</b>) and from winning:</p>
     <ul>
       <li><b>+100 per new level</b> above your best height so far. Rebuilding lost height scores nothing.</li>
       <li><b>+500</b> the first time a settled build reaches the target.</li>
@@ -282,7 +288,7 @@
     <h3>Tips</h3>
     <ul>
       <li>Wide, dense footprints (a high Density with Birth min around 3) stand up to wind much better than thin ones.</li>
-      <li><b>Continue growing</b> only works during the Wind phase. It reseeds the chosen level and adds <b>Levels</b> more on top.</li>
+      <li><b>Build further</b> only works during the Wind phase. It reseeds the chosen level and adds <b>Levels</b> more on top.</li>
       <li>With <b>Build on rubble</b> on, the tower can spread onto the rubble around its base and brace itself.</li>
       <li><b>Clear rubble</b> takes away that support, and anything resting on it falls.</li>
     </ul>
@@ -382,6 +388,20 @@ function boxAt(x, y, z, scale, sway, windY) {
 // Visible lean: the physics sway is mapped so a cube leans at most VIS_MAX of a cube,
 // reaching that exactly at the break threshold, so nothing ever looks like it floats.
 const VIS_MAX = 0.3;
+// Structural heuristics (see updateBrace, exposure and strengthOf)
+const BRACE_MIN = 0.03;         // the stiffest tower still sways this much, relative to a lone column
+const BRACE_MAX = 1.6;          // a top-heavy or necked tower can sway up to this much more
+const BRACE_EXP = 0.25;         // how strongly the tower's geometry changes its sway (0 = not at all)
+const POROUS_MIN = 0.4;         // wind load of a floor that is mostly gaps, relative to a solid one
+const SPINE_FACTOR = 0.75;      // cubes on an unbroken column from the ground sway this much less
+const OVERHANG_STRENGTH = 0.7;  // strength of a cube with nothing directly under it
+const FATIGUE_START = 0.6;      // a cube pushed past this share of its strength starts to weaken
+const FATIGUE_RATE = 0.004;     // weakening per wind check while it is stressed (about 10 checks a second)
+const FATIGUE_MAX = 0.5;        // a cube never loses more than half its strength
+// Stability rating: SOLID loses nothing in a strong gust, STEADY only loses levels in a strong gust,
+// SHAKY already loses levels in a mild one.
+const MILD_GUST = 1.5, STRONG_GUST = 3;     // wind multipliers used for the prediction
+const BRACE_BELOW = 1, BRACE_ABOVE = 0;     // a cube resting on / held down by another counts as this many neighbours
 function visSway(s, thr) { const v = (s / thr) * VIS_MAX; return v > VIS_MAX ? VIS_MAX : v < -VIS_MAX ? -VIS_MAX : v; }
 
 function swayFactorFor(n) { let f = 1.0 - n * 0.12; return f < 0.1 ? 0.1 : f; }
@@ -401,6 +421,8 @@ class CAGrid {
     this.RubbleExtent = 5; this.Maxstack = 3;
     this.cells = new Map();
     this.visThr = 1.5;
+    this.stabTick = 0;
+    this.fatigue = new Map();   // cube key → 0…FATIGUE_MAX, how much it has weakened
   }
   has(x, y, z) { return this.cells.has(K(x, y, z)); }
   alive(x, y, z) { return this.cells.get(K(x, y, z)) === true; }
@@ -528,14 +550,190 @@ class CAGrid {
     return anyLanded;
   }
 
+  // How hard the wind works on a cube at height z (multiplied by the gusting wind and the cube's exposure):
+  //   push:  real wind speeds up with height (the ground slows the air near it), roughly ∝ height^0.2,
+  //          and the pressure on a face ∝ speed², so the push ∝ height^0.4 (WIND_EXP).
+  //   bend:  a tower is a cantilever, so the higher a cube sits the further the floors below it
+  //          let it swing (∝ √height here, a gentle version of the real curve).
+  //   brace: how stiff this tower is at that height (density, footprint, slenderness; see updateBrace).
+  windLoad(z) {
+    const h = Math.max(1, z + 1);
+    const push = Math.pow(h / WIND_REF_HEIGHT, WIND_EXP);
+    const bend = Math.sqrt(h);
+    const b = this.brace && z < this.brace.length ? this.brace[z] : 1;
+    return push * bend * b;
+  }
+
+  // Structural rules (a simplified cantilever model of the tower):
+  // 1. Stiffness comes from WHERE the cubes are, not just how many. A floor resists bending by its
+  //    "second moment of area": cubes far from the floor's middle (along the wind) count the most, like
+  //    the outer frame of a tube skyscraper. So a hollow ring can be as stiff as a solid block.
+  // 2. Wind load per floor = width facing the wind × how solid that floor is (gaps let wind through)
+  //    × how strong the wind is at that height.
+  // 3. Bending adds up from the top down: each floor carries the wind on every floor above it.
+  //    Tapered towers and wide bases do well; top-heavy towers and thin "necks" do badly.
+  // 4. Spines: a cube sitting on an unbroken column of cubes from the ground is anchored.
+  // brace[z] = how far this tower drifts at height z compared with a lone single column (1 = as bad).
+  updateBrace(windHeight, windY) {
+    const lv = new Map(), runTop = new Map();
+    for (const [k, v] of this.cells) {
+      if (v !== true) continue;
+      const z = KZ(k), along = windY ? KY(k) : KX(k), across = windY ? KX(k) : KY(k);
+      let L = lv.get(z);
+      if (!L) { L = { n: 0, su: 0, suu: 0, lo: along, hi: along, faces: new Set() }; lv.set(z, L); }
+      L.n++; L.su += along; L.suu += along * along;
+      if (along < L.lo) L.lo = along; if (along > L.hi) L.hi = along; L.faces.add(across);
+    }
+    let top = 0; for (const z of lv.keys()) if (z > top) top = z;
+    // spines: height of the unbroken column from the ground at each (x, y)
+    for (const [k, v] of this.cells) {
+      if (v !== true || KZ(k) !== 0) continue;
+      const x = KX(k), y = KY(k); let z = 0;
+      while (this.alive(x, y, z)) z++;
+      runTop.set(K(x, y, 0), z);
+    }
+    this.runTop = runTop;
+
+    const load = new Array(top + 1).fill(0), stiff = new Array(top + 1).fill(1), refLoad = new Array(top + 1);
+    const nOf = new Array(top + 1).fill(0);
+    let hollowSum = 0, fillSum = 0, floors = 0, depthSum = 0;
+    for (let z = 0; z <= top; z++) {
+      const push = Math.pow(Math.max(1, z + 1) / WIND_REF_HEIGHT, WIND_EXP);
+      refLoad[z] = push;
+      const L = lv.get(z);
+      if (!L) continue;
+      const e = L.faces.size, d = L.hi - L.lo + 1, fill = L.n / (d * e);
+      const I = L.suu - (L.su * L.su) / L.n + L.n / 12;      // second moment of area along the wind
+      stiff[z] = 12 * I;                                       // a single cube scores 1
+      load[z] = e * (POROUS_MIN + (1 - POROUS_MIN) * fill) * push;
+      nOf[z] = L.n;
+      // how "tube-like" the floor is: stiffness per cube compared with a solid floor of the same depth
+      if (d >= 3) hollowSum += (12 * I / L.n) / (d * d); 
+      fillSum += fill; depthSum += Math.min(d, e); floors++;
+    }
+    // bending moment at each floor from the wind on everything above it, then rotation and drift
+    const drift = (ld, st) => {
+      const out = new Array(top + 1); let S0 = 0, S1 = 0;
+      const M = new Array(top + 1);
+      for (let z = top; z >= 0; z--) { S0 += ld[z]; S1 += ld[z] * z; M[z] = S1 - (z - 0.5) * S0; }
+      let rot = 0, dr = 0;
+      for (let z = 0; z <= top; z++) { rot += M[z] / st[z]; dr += rot; out[z] = dr; }
+      return out;
+    };
+    const dT = drift(load, stiff), dRef = drift(refLoad, new Array(top + 1).fill(1));
+    const brace = new Array(top + 1);
+    for (let z = 0; z <= top; z++)
+      brace[z] = Math.min(BRACE_MAX, Math.max(BRACE_MIN, Math.pow(dRef[z] > 0 ? dT[z] / dRef[z] : 1, BRACE_EXP)));
+    this.brace = brace;
+
+    // Read-outs for the Stability meter
+    this.slenderness = floors ? (top + 1) / Math.max(1, depthSum / floors) : 0;
+    this.fill = floors ? fillSum / floors : 0;
+    const third = Math.max(1, Math.floor((top + 1) / 3));
+    const avgN = (a, b) => { let t = 0, c = 0; for (let z = a; z < b; z++) { t += nOf[z]; c++; } return c ? t / c : 0; };
+    const low = avgN(0, third), high = avgN(top + 1 - third, top + 1);
+    let spine = false; for (const h of runTop.values()) if (h >= 0.85 * (top + 1) && top >= 6) { spine = true; break; }
+    this.shape = top < 6 ? "" : high > 1.6 * low ? "top-heavy" : high < 0.6 * low ? "tapered"
+      : floors && hollowSum / floors > 1.15 && this.fill < 0.7 ? "tube"
+      : this.fill < 0.45 ? "lattice" : spine && this.fill < 0.65 ? "spine" : "";
+    // Stability: predict how many levels a strong gust would strip off the top.
+    this.levelsLost = (mul) => {
+      // Play the gust out on a copy of the tower: cubes that snap expose the cubes behind them,
+      // which may snap next, and anything left without support falls (the game's own support rule).
+      let S = new Set();
+      for (const [k, v] of this.cells) if (v === true) S.add(k);
+      const has = (x, y, z) => S.has(K(x, y, z));
+      for (let round = 0; round < 12; round++) {
+        const next = new Set();
+        for (const k of S) {
+          const x = KX(k), y = KY(k), z = KZ(k);
+          let n = 0;
+          for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) if ((dx || dy) && has(x + dx, y + dy, z)) n++;
+          const below = z > 0 && has(x, y, z - 1);
+          n += (below ? BRACE_BELOW : 0) + (has(x, y, z + 1) ? BRACE_ABOVE : 0);
+          let ex = swayFactorFor(n);
+          const rt = this.runTop && this.runTop.get(K(x, y, 0));
+          if (rt && z < rt) ex *= SPINE_FACTOR;
+          let strength = WIND_THRESHOLD * (1 - (this.fatigue.get(k) || 0));
+          if (z > 0 && !below) strength *= OVERHANG_STRENGTH;
+          if (WIND_BASE * mul * this.windLoad(z) * ex <= strength) next.add(k);
+        }
+        // support, from the ground up
+        const kept = new Set(), levels = new Map();
+        for (const k of next) { const z = KZ(k); if (!levels.has(z)) levels.set(z, []); levels.get(z).push(k); }
+        for (let z = 0; z <= top; z++) {
+          let cand = levels.get(z) || [];
+          const here = new Set(cand);
+          let changed = true;
+          while (changed) {
+            changed = false;
+            cand = cand.filter(k => {
+              const x = KX(k), y = KY(k);
+              const ok = z === 0 || kept.has(K(x, y, z - 1)) ||
+                (here.has(K(x + 1, y, z)) && here.has(K(x - 1, y, z))) || (here.has(K(x, y + 1, z)) && here.has(K(x, y - 1, z)));
+              if (!ok) { here.delete(k); changed = true; }
+              return ok;
+            });
+          }
+          for (const k of cand) kept.add(k);
+        }
+        const done = kept.size === S.size;
+        S = kept;
+        if (done) break;
+      }
+      let h = 0; for (const k of S) if (KZ(k) + 1 > h) h = KZ(k) + 1;
+      return (top + 1) - h;
+    };
+    // The prediction is the slow part, so it only runs while the wind blows, and the two gust sizes
+    // take turns every 1.5 s. A fresh tower (new game or build) is rated straight away.
+    if (this.phaseNow !== 3) return;
+    if (this.stabDirty || !this.stability) {
+      this.stabDirty = false; this.stabTick = 0;
+      this.lostStrong = this.levelsLost(STRONG_GUST);
+      this.lostMild = this.lostStrong ? this.levelsLost(MILD_GUST) : 0;
+    } else if (++this.stabTick === 15) {
+      this.lostStrong = this.levelsLost(STRONG_GUST);
+      if (!this.lostStrong) this.lostMild = 0;
+    } else if (this.stabTick >= 30) {
+      this.stabTick = 0;
+      this.lostMild = this.lostStrong ? this.levelsLost(MILD_GUST) : 0;
+    } else return;
+    this.stability = this.lostStrong === 0 ? "solid" : this.lostMild === 0 ? "steady" : "shaky";
+  }
+
+  // How exposed a single cube is: fewer neighbours on its floor = more exposed. Cubes on a spine are anchored.
+  exposure(x, y, z) {
+    // A cube resting on another cube is braced by it, and one with a cube on top is held down,
+    // so they count as extra neighbours. That keeps open but well-connected lattices from being brittle.
+    const braced = (z > 0 && this.alive(x, y, z - 1) ? BRACE_BELOW : 0) + (this.alive(x, y, z + 1) ? BRACE_ABOVE : 0);
+    let f = swayFactorFor(this.neighbours(x, y, z) + braced);
+    const rt = this.runTop && this.runTop.get(K(x, y, 0));
+    if (rt && z < rt) f *= SPINE_FACTOR;
+    return f;
+  }
+
+  // 4. Fatigue. A cube that keeps being pushed close to its limit slowly weakens, like a joint
+  //    working loose. Dense interior cubes rarely get stressed, exposed edges and spires do.
+  strengthOf(x, y, z, threshold) {
+    let t = threshold * (1 - (this.fatigue.get(K(x, y, z)) || 0));
+    // 5. Overhangs: a cube with nothing directly under it hangs off its neighbours and is weaker.
+    if (z > 0 && !this.alive(x, y, z - 1)) t *= OVERHANG_STRENGTH;
+    return t;
+  }
+
   windInstabilityCheck(falling, rubble, windHeight, windOffset, threshold) {
     let anyFell = false;
     const aliveCells = [];
     for (const [k, v] of this.cells) if (v === true && KZ(k) >= windHeight) aliveCells.push({ x: KX(k), y: KY(k), z: KZ(k) });
 
     for (const c of aliveCells) {
-      const sway = windOffset * (c.z - windHeight + 1) * swayFactorFor(this.neighbours(c.x, c.y, c.z));
-      if (Math.abs(sway) > threshold && !falling.has(c.x, c.y, c.z)) {
+      const sway = windOffset * this.windLoad(c.z) * this.exposure(c.x, c.y, c.z);
+      const strength = this.strengthOf(c.x, c.y, c.z, threshold), k = K(c.x, c.y, c.z);
+      // Only exposed cubes wear out: a solid tower, or a cube boxed in on 6+ sides, doesn't fatigue.
+      const exposed = this.stability !== "solid" && this.neighbours(c.x, c.y, c.z) < 6;
+      if (exposed && Math.abs(sway) > FATIGUE_START * strength) this.fatigue.set(k, Math.min(FATIGUE_MAX, (this.fatigue.get(k) || 0) + FATIGUE_RATE));
+      if (Math.abs(sway) > strength && !falling.has(c.x, c.y, c.z)) {
+        this.fatigue.delete(k);
         this.set(c.x, c.y, c.z, false);
         falling.add({ x: c.x, y: c.y, z: c.z });
         anyFell = true;
@@ -543,7 +741,7 @@ class CAGrid {
     }
 
     const rubbleToRemove = [];
-    const rubbleWindHeight = Math.floor((windHeight * 3) / 4);
+    const rubbleWindHeight = RUBBLE_WIND_LINE;
     for (const cur of rubble.arr) {
       if (cur.z < rubbleWindHeight) continue;
       let sway = windOffset * (cur.z - rubbleWindHeight + 1);
@@ -598,7 +796,7 @@ class CAGrid {
       if (lx < 0 || lx >= this.Width || ly < 0 || ly >= this.Length) continue;
       let sway = 0;
       if (lz >= windHeight) {
-        sway = windOffset * (lz - windHeight + 1) * swayFactorFor(this.neighbours(lx, ly, lz));
+        sway = windOffset * this.windLoad(lz) * this.exposure(lx, ly, lz);
         sway = visSway(dampen(sway, lx, ly, lz, windY, isAlive), this.visThr);
       }
       let scale = 1;
@@ -612,7 +810,7 @@ class CAGrid {
     const boxes = [];
     for (const fb of falling.arr) {
       let s = 0;
-      if (fb.z >= windHeight) s = visSway(windFallOffset * (fb.z - windHeight + 1) * swayFactorFor(this.neighbours(fb.x, fb.y, fb.z)), this.visThr);
+      if (fb.z >= windHeight) s = visSway(windFallOffset * this.windLoad(fb.z) * this.exposure(fb.x, fb.y, fb.z), this.visThr);
       boxes.push(boxAt(fb.x, fb.y, fb.z, 1, s, windY));
     }
     return boxes;
@@ -650,7 +848,7 @@ class CAGrid {
       if (ox >= 0 && ox < this.Width && oy >= 0 && oy < this.Length) continue;
       let sway = 0;
       if (oz >= windHeight) {
-        sway = windOffset * (oz - windHeight + 1) * swayFactorFor(this.neighbours(ox, oy, oz));
+        sway = windOffset * this.windLoad(oz) * this.exposure(ox, oy, oz);
         sway = visSway(dampen(sway, ox, oy, oz, windY, isAlive), this.visThr);
       }
       boxes.push(boxAt(ox, oy, oz, taperScale(ox, oy, oz), sway, windY));
@@ -664,6 +862,14 @@ const HOLD_GUSTS = 3;        // gusts the tower must survive at or above the tar
 const TARGET_BONUS = 500;    // first time a settled build reaches the target
 const WIN_BONUS = 2000;      // for holding the target through HOLD_GUSTS gusts
 const PAR_BONUS = 1000;      // per move under the benchmark, added when you win
+// Wind
+const WIND_BASE = 1.1;          // calm-day wind strength
+const WIND_THRESHOLD = 1.2;     // how far a cube can be pushed before it snaps off
+const WIND_EXP = 0.4;           // wind push grows with height^WIND_EXP (real wind: about 0.3–0.6)
+const WIND_REF_HEIGHT = 5;      // the height at which the push is ×1
+const RUBBLE_WIND_LINE = 3;     // rubble below this many levels is sheltered from the wind
+const GUST_MIN = 0.1, GUST_MAX = 0.3;   // each gust makes the wind this much stronger
+const WIND_CAP = 3;          // strongest the wind can get
 
 class Simulation {
   constructor() {
@@ -689,8 +895,8 @@ class Simulation {
   // One solution of the Grasshopper component. Returns null when there is no grid.
   tick(p) {
     const seedX = Math.floor(p.width / 2), seedY = Math.floor(p.length / 2);
-    const windHeight = Math.floor((p.levels * 7) / 10);
-    const windThreshold = 0.5 + p.levels * 0.045;
+    const windHeight = 0;                    // the wind reaches every level, getting stronger with height
+    const windThreshold = WIND_THRESHOLD;
     const maxStack = 2 + Math.floor(p.levels / 5);
     const rubbleExtent = 3 + Math.floor(p.levels / 2);
     const rubble = this.rubble, falling = this.falling;
@@ -711,13 +917,17 @@ class Simulation {
       this.par = Math.ceil(p.target / p.levels) + 1;
     }
     const g = this.grid;
-    if (g) { g.RubbleExtent = rubbleExtent; g.Maxstack = maxStack; g.visThr = windThreshold; }
+    if (g) {
+      g.RubbleExtent = rubbleExtent; g.Maxstack = maxStack; g.visThr = windThreshold;
+      g.phaseNow = this.phase;
+      g.updateBrace(windHeight, p.windY);
+    }
 
     // Gusts: while the wind blows, strength ramps up at random intervals
     if (g && this.phase === PHASE.wind && !p.stopWind && p.gusts) {
       if (--this.gustIn <= 0) {
-        const inc = 0.1 + this.rnd.nextDouble() * 0.3;
-        this.windMul = Math.min(4, this.windMul + inc);
+        const inc = GUST_MIN + this.rnd.nextDouble() * (GUST_MAX - GUST_MIN);
+        this.windMul = Math.min(WIND_CAP, this.windMul + inc);
         this.gusts++;
         this.gustIn = 40 + this.rnd.next(60);
         this.windCheckcooldown = Math.min(this.windCheckcooldown, 3);
@@ -725,7 +935,7 @@ class Simulation {
         if (this.holding && !this.won) this.gustEval = 30;   // judge this gust ~3 s later, once any collapse has settled
       }
     }
-    const windStrength = (0.05 + p.levels * 0.02) * this.windMul;
+    const windStrength = WIND_BASE * this.windMul;   // same for every build size; only gusts change it
 
     if (p.clearRubble) {
       rubble.clear();
@@ -739,6 +949,7 @@ class Simulation {
       this.currentLevel = from + 1; this.targetLevel = newTarget; this.phase = PHASE.generate;
       this.moves++; this.moveOpen = true;
       this.holding = false; this.holdGusts = 0; this.gustEval = 0;   // building restarts the hold
+      g.stabDirty = true;
     }
 
     if (this.phase === PHASE.generate && g) {
@@ -768,6 +979,7 @@ class Simulation {
           }
         }
         this.windCausedFall = false; this.windFalloffset = 0; this.windCheckcooldown = 15;
+        if (this.moveOpen) { this.windMul = 1 + (this.windMul - 1) * 0.5; this.gustIn = 50 + this.rnd.next(50); }   // a new build halves the extra wind
         this.phase = PHASE.wind;
         justSettled = true;
       }
@@ -791,7 +1003,7 @@ class Simulation {
     let h = 0;
     for (const [k, v] of g.cells) if (v === true) { const z = KZ(k) + 1; if (z > h) h = z; }
     this.height = h;
-    // Scoring happens only when a player move (New game / Continue growing) settles
+    // Scoring happens only when a player move (New game / Build further) settles
     if (justSettled) {
       if (this.moveOpen) {
         this.moveOpen = false;
@@ -897,10 +1109,11 @@ for (const [sec, list] of Object.entries(TOGGLES)) {
   }
 }
 const btnContinue = document.createElement("button");
-btnContinue.textContent = "Continue growing";
+btnContinue.textContent = "Build further";
 btnContinue.className = "primary";
 btnContinue.style.width = "100%";
-document.getElementById("secContinue").appendChild(btnContinue);
+btnContinue.style.marginBottom = "8px";
+document.getElementById("secContinue").prepend(btnContinue);
 
 let needsFraming = false;
 const pending = { restart: false, startGen: false, continueGen: false, clearRubble: false };
@@ -1308,13 +1521,22 @@ function loop() {
   $("heightBar").style.width = `${Math.min(100, (sim.height / target) * 100)}%`;
   $("heightBar").classList.toggle("done", sim.targetReached);
   $("windTxt").textContent = `×${sim.windMul.toFixed(2)}`;
+  if (sim.grid && sim.grid.stability) {
+    const gr = sim.grid, st = gr.stability;
+    const lost = st === "shaky" ? gr.lostMild : gr.lostStrong;
+    $("stabTxt").textContent = `${st === "solid" ? "Solid" : st === "steady" ? "Steady" : "Shaky"}${gr.shape ? " · " + gr.shape : ""}${lost ? ` · −${lost}` : ""}`;
+    $("stabTxt").title = lost ? `A ${st === "shaky" ? "mild" : "strong"} gust would strip about ${lost} level${lost > 1 ? "s" : ""} off the top` : "Holds even in strong gusts";
+    $("stabTxt").style.color = st === "solid" ? "var(--rubble)" : st === "steady" ? "var(--falling)" : "#ff6b6b";
+    $("stabBar").style.width = `${st === "solid" ? 100 : st === "steady" ? Math.max(40, 80 - gr.lostStrong * 4) : Math.max(8, 35 - gr.lostMild * 3)}%`;
+    $("stabBar").style.background = $("stabTxt").style.color;
+  } else { $("stabTxt").textContent = "–"; $("stabTxt").style.color = ""; $("stabBar").style.width = "0%"; }
   const pips = $("pips").children;
   for (let i = 0; i < pips.length; i++) pips[i].classList.toggle("on", sim.won || i < sim.holdGusts);
   $("pips").classList.toggle("active", sim.holding);
   $("holdTxt").textContent = sim.won ? "✓ won"
     : sim.holding ? (p.gusts ? `gust ${sim.holdGusts} / ${HOLD_GUSTS}` : "turn on gusts")
     : sim.targetReached ? "build back up" : "reach the target";
-  $("windBar").style.width = `${((sim.windMul - 1) / 3) * 100}%`;
+  $("windBar").style.width = `${((sim.windMul - 1) / (WIND_CAP - 1)) * 100}%`;
 
   btnContinue.disabled = !(sim.grid && sim.phase === PHASE.wind);
   const delay = out ? out.sleep / +inputs.speed.value : 60;
