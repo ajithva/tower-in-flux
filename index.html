@@ -70,8 +70,9 @@
   .score .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
   .score .best { font-size: 12px; color: var(--muted); font-family: "IBM Plex Mono", monospace; margin-top: 2px; }
   .meter { margin-top: 10px; }
-  .meter .top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
-  .meter .top span:last-child { font-family: "IBM Plex Mono", monospace; color: var(--muted); }
+  .meter .top { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; margin-bottom: 4px; }
+  .meter .top span:first-child { flex: none; }
+  .meter .top span:last-child { font-family: "IBM Plex Mono", monospace; color: var(--muted); text-align: right; }
   .bar { position: relative; height: 8px; border-radius: 4px; background: #2a2e34; overflow: hidden; }
   .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; transition: width .25s; }
   #heightBar { background: var(--tower); }
@@ -120,15 +121,24 @@
   .rules { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; color: #c9cdd3; line-height: 1.7; margin-bottom: 10px; }
 
   @media (max-width: 760px) {
-    .app { grid-template-columns: 1fr; grid-template-rows: 62vh auto; height: auto; }
-    main { order: -1; height: 62vh; }
+    .app { grid-template-columns: 1fr; grid-template-rows: 72vh auto; height: auto; }
+    main { order: -1; height: 72vh; }
     aside { border-right: 0; border-top: 1px solid var(--line); padding: 16px; }
     .orbit-hint { display: none; }
-    .score { width: 170px; padding: 10px 12px; }
-    .score .big { font-size: 22px; }
-    .hud { font-size: 11px; padding: 8px 10px; top: auto; bottom: 12px; left: 12px; }
-    .topright { top: 12px; right: 12px; }
+    /* score card becomes a compact strip across the top: score on the left, meters in two columns */
+    .topright { top: 8px; left: 8px; right: 8px; align-items: stretch; }
+    .score { width: auto; padding: 8px 10px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; row-gap: 5px; align-items: start; }
+    .score .lbl { display: none; }
+    .score .big { grid-column: 1; grid-row: 1 / span 2; font-size: 24px; align-self: center; }
+    .score .best { grid-column: 2; font-size: 10.5px; white-space: nowrap; margin: 0; text-align: right; }
+    .score .meter { margin-top: 0; min-width: 0; }
+    .meter .top { font-size: 10.5px; margin-bottom: 3px; gap: 6px; }
+    .meter .top span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar { height: 6px; }
+    .hud { font-size: 10.5px; padding: 6px 9px; top: auto; bottom: 8px; left: 8px; line-height: 1.6; }
+    #hudCounts { display: none; }
     .legend { display: none; }
+    .toast { top: 58%; }
     .sheet { padding: 20px; }
   }
 </style>
@@ -1449,9 +1459,14 @@ const world = { cx: 5.5, cy: 5.5, h: 18, r: 38 };
 function frame(w, l, lv) {
   const cx = (w - 1) / 2, cy = (l - 1) / 2, cz = lv / 2;
   const size = Math.max(w, l, lv);
-  controls.target.set(cx, cy, cz * 0.8);
+  // On a narrow (phone) screen the score strip covers the top, so aim a little higher (the tower sits lower)
+  // and pull the camera back so the whole tower fits the narrow view.
+  const aspect = container.clientWidth / Math.max(1, container.clientHeight);
+  const narrow = window.innerWidth <= 760;
+  controls.target.set(cx, cy, cz * (narrow ? 1.05 : 0.8));
   const dir = new THREE.Vector3(1.1, -1, 0.75).normalize();
-  camera.position.copy(controls.target).addScaledVector(dir, size * 2.4 + 10);
+  const pull = aspect < 1 ? Math.min(1.8, 1 / Math.pow(aspect, 0.7)) : 1;
+  camera.position.copy(controls.target).addScaledVector(dir, (size * 2.4 + 10) * pull);
   Object.assign(world, { cx, cy, h: lv, r: size + 20 });
   const r = world.r;
   Object.assign(key.shadow.camera, { left: -r * 1.2, right: r * 1.2, top: r * 1.2, bottom: -r * 1.2, near: 1, far: r * 6 });
@@ -1735,18 +1750,19 @@ function loop() {
     $("stabBar").style.background = $("stabTxt").style.color;
   } else { $("stabTxt").textContent = "–"; $("stabTxt").style.color = ""; $("stabBar").style.width = "0%"; }
   const need = SITES[+siteSel.value].grade;
+  const narrowUI = window.innerWidth <= 760;   // phones get shorter wording so it fits the score strip
   if (sim.grade) {
     const ok = gradeRank(sim.grade) <= gradeRank(need);
-    $("effTxt").textContent = `${sim.grade} · site needs ${need}`;
+    $("effTxt").textContent = narrowUI ? `${sim.grade} · needs ${need}` : `${sim.grade} · site needs ${need}`;
     $("effTxt").style.color = ok ? "var(--rubble)" : "#ff6b6b";
     $("effBar").style.width = `${Math.max(6, Math.min(100, (1 - sim.eff / 0.9) * 100))}%`;
     $("effBar").style.background = $("effTxt").style.color;
     $("effTxt").title = `${sim.standing.toLocaleString()} cubes standing in ${sim.height} levels on a ${p.width}×${p.length} plot (${Math.round(sim.eff * 100)}% filled)`;
-  } else { $("effTxt").textContent = `site needs ${need}`; $("effTxt").style.color = ""; $("effBar").style.width = "0%"; }
+  } else { $("effTxt").textContent = narrowUI ? `needs ${need}` : `site needs ${need}`; $("effTxt").style.color = ""; $("effBar").style.width = "0%"; }
   $("holdTxt").textContent = sim.won ? "✓ won"
-    : sim.holding ? (p.stopWind ? "start the wind to check" : sim.waitingEvents ? `survive ${MIN_EVENTS} events (${sim.gusts}/${MIN_EVENTS})` : "checking…")
-    : sim.gradeShort && sim.height >= target ? `grade ${sim.grade}, needs ${need}`
-    : `reach ${target} at grade ${need}`;
+    : sim.holding ? (p.stopWind ? (narrowUI ? "start wind" : "start the wind to check") : sim.waitingEvents ? (narrowUI ? `events ${sim.gusts}/${MIN_EVENTS}` : `survive ${MIN_EVENTS} events (${sim.gusts}/${MIN_EVENTS})`) : "checking…")
+    : sim.gradeShort && sim.height >= target ? (narrowUI ? `grade ${sim.grade} < ${need}` : `grade ${sim.grade}, needs ${need}`)
+    : narrowUI ? `${target} at grade ${need}` : `reach ${target} at grade ${need}`;
   $("windBar").style.width = `${((sim.windMul - 1) / (WIND_CAP - 1)) * 100}%`;
 
   btnContinue.disabled = !(sim.grid && sim.phase === PHASE.wind);
