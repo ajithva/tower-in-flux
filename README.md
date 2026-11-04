@@ -4,7 +4,7 @@ A browser game built on a 3D cellular automaton. A tower grows level by level fr
 
 This started as a Grasshopper C# component. The web version keeps the original rules, phases and constants, turns each input into a slider, toggle or button, and adds a challenge mode on top.
 
-**Play:** `https://<your-username>.github.io/tower-in-flux/`
+**Play:** [ajithva.github.io/tower-in-flux](https://ajithva.github.io/tower-in-flux/)
 
 ## How to play
 
@@ -15,11 +15,11 @@ This started as a Grasshopper C# component. The web version keeps the original r
 
 ### Winning and scoring
 
-**To win:** reach the target height with a settled build, then hold it through **3 gusts in a row** without building. If a gust knocks the tower below the target, the count resets. When you win, a "Successful! You did it." panel lets you keep playing, play again or reset.
+**To win:** reach the target height with a settled build at the site's efficiency grade. About 3 seconds after the build settles the tower is checked: still at the target and lean enough means you win. Gusts and earthquakes hit the tower between builds, so it has to survive them on the way up. When you win, a "Successful! You did it." panel lets you keep playing, play again or reset.
 
 Points come from your moves (**New game** or **Build further**) and from winning:
 
-- **−½ per cube** a build places (materials), and **−3 per cube** the wind blows off or a quake shakes loose. The score can go below 0.
+- **−½ per cube** a build places (materials), and **−3 per cube** the wind blows off or a quake shakes loose (both scaled down on plots bigger than 10×10). The score can go below 0.
 - **+100 per new level** above your best height so far. Rebuilding lost height scores nothing.
 - **+500** the first time a settled build reaches the target.
 - **+2,000 for winning**, plus **1,000 per move under the benchmark**. The benchmark is the number of builds a good player should need: target ÷ levels per build, rounded up, + 1 (3 with the default settings).
@@ -31,11 +31,25 @@ The wind gets stronger with height (its push grows with height^0.4, as real wind
 
 ### Sites, efficiency and earthquakes
 
-- **Sites** fix the plot size and target height, and set the efficiency grade you need to win: Town square (12×12, 36 high, needs B), Corner plot (10×10, 30, C), Terrace infill (16×7, 28, C), Needle site (9×9, 40, C), Open plaza (18×18, 36, A), or Custom (your own sliders, C). On a fixed site the tower can't grow past the plot boundary.
-- **Efficiency** = cubes standing in the tower ÷ (height × plot area), i.e. how much of the plot's volume it fills. A ≤ 25%, B ≤ 40%, C ≤ 55%, D ≤ 75%, else E. A win needs the site's grade and adds +1,500 / 1,000 / 500 for A / B / C.
+- **Sites** fix the plot size and target height, set the efficiency grade you need, and have their own wind strength and share of earthquakes. On a fixed site the tower can't grow past the plot boundary.
+
+  | Site | Plot | Target | Grade | Wind | Quakes |
+  |---|---|---|---|---|---|
+  | Town square | 12×12 | 36 | B | ×1 | 20% |
+  | Corner plot | 10×10 | 30 | C | ×1 | 35% |
+  | Harbour wall | 12×12 | 32 | D | ×1.35 | none |
+  | Hilltop mast | 10×10 | 30 | D | ×1.45 | none |
+  | Terrace infill | 16×7 | 28 | C | ×1 | 35% |
+  | Needle site | 9×9 | 40 | C | ×0.9 | 35% |
+  | Fault line | 14×14 | 30 | C | ×0.7 | 75% |
+  | Open plaza | 18×18 | 36 | B | ×0.9 | 30% |
+  | Custom | sliders | slider | C | ×1 | 35% |
+
+  The windy, quake-free Harbour wall and Hilltop mast reward dense, sturdy towers (but not solid blocks: they still need a D); the Fault line rewards light, flexible ones.
+- **Efficiency** = (cubes standing + cubes eroded from the levels still standing) ÷ (height × plot area). Erosion still counts, so a battered tower doesn't get 'leaner'; levels that blew away and were rebuilt start fresh. A ≤ 25%, B ≤ 40%, C ≤ 55%, D ≤ 75%, else E. A win needs the site's grade and adds +1,500 / 1,000 / 500 for A / B / C.
 - **Earthquakes** replace about a third of the gusts. Each floor carries the sideways pull of the cubes above it, and stiff towers pick up more of the shaking, so dense, wide towers that resist wind suffer most. An overloaded floor loses its most exposed cubes.
 - **Visible sway:** unstable towers rock as a whole in the wind (Shaky the most), and quakes shake them.
-- Winning now means holding the target through **3 events** (gusts or quakes) **and** meeting the site's grade.
+- **Winning:** a settled build reaches the target at the site's grade, is still standing about 3 seconds later, and the tower has survived at least 2 gusts or quakes during the game. There's no separate hold phase: it has to survive them between builds on the way up.
 
 ### Stability
 
@@ -72,19 +86,4 @@ Choose **Day**, **Night** or **Cycle** under *Lighting & display*. In Cycle the 
 | Build on rubble, Stop wind, Wind along Y | `useRubble`, `stopWind`, `windY` |
 | Continue from level | `continueFromLevel` |
 | Taper | `taper` |
-| Target height, Random gusts, Speed, Voxel gaps | new in the web version |
-
-## Differences from the Grasshopper version
-
-- **Random numbers:** .NET's `System.Random` has been replaced with a seeded JavaScript generator. The same seed always gives the same starting level, but it won't match the Rhino output exactly.
-- **Wind strength:** it is multiplied by the gust factor.
-- **Rubble spread:** how far rubble can spread (the adaptive extent) is capped so the browser stays responsive.
-- **Grid size:** width, length and levels per build go up to 30.
-
-## Running locally
-
-There is no build step. The page is a single HTML file that loads [three.js](https://threejs.org) from the jsDelivr CDN. Serve the folder rather than opening the file directly:
-
-```bash
-python3 -m http.server 8000   # then open http://localhost:8000
-```
+| Site, Target height, Random gusts, Earthquakes, Speed, Voxel gaps | new in the web version |
