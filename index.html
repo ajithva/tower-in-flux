@@ -54,6 +54,8 @@
   .seg button { border: 0; background: transparent; padding: 8px 6px; border-radius: 7px; color: var(--muted); }
   .seg button.on { background: #0f2a2d; color: var(--tower); }
   .clock { margin-left: auto; padding-left: 14px; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 12px; color: var(--muted); }
+  select { width: 100%; font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); margin-top: 6px; }
+  input[type=range]:disabled { opacity: .45; }
   .hint { font-size: 12px; color: var(--muted); line-height: 1.45; margin: 4px 0 0; }
 
   /* HUD */
@@ -151,7 +153,11 @@
       <p class="hint" style="margin:0 0 10px">While the wind is blowing, add more levels on top. The starting level jumps to the top of the tower each time it settles.</p>
     </section>
 
-    <section id="secChallenge"><h2>Challenge</h2></section>
+    <section id="secChallenge"><h2>Challenge</h2>
+      <div class="row"><label for="site"><span>Site</span><output id="siteNeed"></output></label>
+        <select id="site"></select></div>
+      <p class="hint" id="siteNote" style="margin:-2px 0 10px"></p>
+    </section>
     <section id="secSetup"><h2>Grid</h2></section>
     <section id="secRules"><h2>Growth rules</h2></section>
     <section id="secEnv"><h2>Wind &amp; rubble</h2></section>
@@ -188,6 +194,10 @@
           <div class="bar"><i id="stabBar" style="width:0%"></i></div>
         </div>
         <div class="meter">
+          <div class="top"><span>Efficiency</span><span id="effTxt">–</span></div>
+          <div class="bar"><i id="effBar" style="width:0%"></i></div>
+        </div>
+        <div class="meter">
           <div class="top"><span>Wind</span><span id="windTxt">×1.00</span></div>
           <div class="bar"><i id="windBar" style="width:0%"></i></div>
         </div>
@@ -209,12 +219,12 @@
     <div class="kicker">A cellular automaton game</div>
     <h2 id="introTitle">Tower in Flux</h2>
     <p>The tower here isn't designed. It grows from simple local rules: each new block appears or doesn't depending on how many neighbours it has on the level below. Blocks with nothing under them fall, pile up as rubble, and can become ground for more building. Once the tower settles, the wind starts, and it gets stronger in random gusts.</p>
-    <p><b>Your goal:</b> get the tower up to the <b class="c-t">target height</b>, then keep it there through <b>3 gusts</b> without building. Do that and you win.</p>
+    <p><b>Your goal:</b> pick a <b>site</b>, get the tower up to its <b class="c-t">target height</b>, then keep it there through <b>3 gusts or earthquakes</b> without building. You also have to build lean: every cube costs material, and each site needs an <b>efficiency grade</b>. A solid block of cubes won't pass.</p>
     <div class="steps">
-      <div class="step"><div class="n">1</div><p><b>Tune the rules.</b> Choose the grid size, seed, density and growth rules. They decide how solid or lacy the tower comes out.</p></div>
+      <div class="step"><div class="n">1</div><p><b>Pick a site, then tune the rules.</b> The site fixes the plot and target. The seed, density and growth rules decide how solid or lacy the tower comes out.</p></div>
       <div class="step"><div class="n">2</div><p><b>Press New game.</b> The tower grows level by level, then anything unsupported <span class="c-f">falls</span> and lands as <span class="c-r">rubble</span>.</p></div>
       <div class="step"><div class="n">3</div><p><b>Keep building.</b> While the wind is blowing, press <b>Build further</b> to add more levels on top, until you pass the target.</p></div>
-      <div class="step"><div class="n">4</div><p><b>Hold it through 3 gusts.</b> Once a build settles at the target, stop building and survive 3 gusts. If the tower drops below the target, build back up and try again. Beating the move benchmark earns a bigger win bonus.</p></div>
+      <div class="step"><div class="n">4</div><p><b>Hold it through 3 events.</b> Once a build settles at the target, stop building and survive 3 gusts or quakes. Wind punishes thin towers, quakes punish heavy, stiff ones. Lost cubes cost points, and you only win if your efficiency grade meets the site's.</p></div>
     </div>
     <div class="actions">
       <button class="primary" id="introPlay">Play</button>
@@ -228,7 +238,7 @@
   <div class="sheet" style="max-width:520px">
     <div class="kicker" style="color:var(--rubble)">Challenge complete</div>
     <h2 id="winTitle" class="win-big">Successful! You did it.</h2>
-    <p>Your tower reached the target and held it through 3 gusts.</p>
+    <p>Your tower reached the target, held it through 3 gusts and quakes, and was lean enough for the site.</p>
     <div class="win-stats">
       <div><span>Score</span><b id="wScore">0</b></div>
       <div><span>Moves</span><b id="wMoves">0</b></div>
@@ -274,20 +284,29 @@
     <p><b>Stability.</b> The tower behaves like a simple real structure. A floor's stiffness depends on <i>where</i> its cubes are: cubes far from the middle stiffen it most, like the frame of a tube skyscraper, so a hollow ring can be as strong as a solid block. Each floor also carries the wind on every floor above it, so wide bases and tapering tops help, while thin "necks" and top-heavy floors hurt. Gaps let some wind through, a cube resting on another cube is braced by it, cubes on an unbroken column from the ground (a spine) are anchored, and cubes with nothing directly beneath them are weaker. When edge cubes snap, the ones behind them are exposed next, so a tower erodes from the outside in. Exposed cubes also slowly wear out under repeated gusts.</p>
     <p>The <b>Stability</b> meter rates the top of your tower: <b>Solid</b> (holds its height even in the strongest gusts, and never wears out), <b>Steady</b> (only the strongest gusts cost it levels) or <b>Shaky</b> (even mild gusts do), and names the shape it sees: tapered, tube, lattice, spine or top-heavy. A number like <b>−4</b> means a gust would erode about 4 levels off the top, so build that much above the target or make the tower wider and stiffer.</p>
 
+    <h3>Earthquakes</h3>
+    <p>About a third of events are earthquakes instead of gusts. The ground shakes for a couple of seconds, and each floor has to carry the sideways pull of every cube above it. Stiff towers pick up more of the shaking than flexible ones, as real buildings do, so the dense, wide towers that shrug off wind are the ones quakes hurt. An overloaded floor loses its most exposed cubes, and anything they held up comes down too. Turn quakes off under <b>Challenge</b> if you want wind only.</p>
+
+    <h3>Sites and efficiency</h3>
+    <p>Each <b>site</b> fixes the plot size and the target height, and sets the <b>efficiency grade</b> you need to win. Efficiency = cubes standing in your tower ÷ (height × plot area): how much of the plot's volume the tower fills. On a fixed site the tower can't grow past the plot boundary. <b>A</b> ≤ 25%, <b>B</b> ≤ 40%, <b>C</b> ≤ 55%, <b>D</b> ≤ 75%, otherwise <b>E</b>. Dense rules fill most of the plot and grade D or E, so you'll need sparser rules (lower Birth max, higher Survive min) that still stand up to the wind. Adding lean levels with <b>Build further</b> can raise your grade, and every cube still costs material whether it stays or not. <b>Custom</b> lets you set the plot yourself and needs a C.</p>
+
     <h3>Scoring</h3>
-    <p><b>To win:</b> reach the target height with a settled build, then hold it through <b>3 gusts in a row</b> without building. The score card counts the gusts you've held. If a gust knocks the tower below the target, the count resets, and so does building while you're holding.</p>
-    <p>Points come only from your moves (<b>New game</b> or <b>Build further</b>) and from winning:</p>
+    <p><b>To win:</b> reach the target height with a settled build, hold it through <b>3 events in a row</b> (gusts or quakes) without building, and have an efficiency grade at least as good as the site needs. The score card counts the events you've held. If one knocks the tower below the target, the count resets, and so does building while you're holding. If you hold all 3 but your grade is short, you need to improve it before you can win.</p>
+    <p>Points come from your moves and from winning. Materials and losses take them away, and the score can go below 0:</p>
     <ul>
+      <li><b>−½ per cube</b> a build places (materials), charged when the build settles.</li>
+      <li><b>−3 per cube</b> the wind blows off or a quake shakes loose. Cubes that drop because a new build has nothing under it don't count.</li>
       <li><b>+100 per new level</b> above your best height so far. Rebuilding lost height scores nothing.</li>
       <li><b>+500</b> the first time a settled build reaches the target.</li>
-      <li><b>+2,000 for winning</b>, plus <b>1,000 per move under the benchmark</b>. The benchmark is the number of builds a good player should need: target ÷ levels per build, rounded up, + 1 (3 with the default settings).</li>
+      <li><b>+2,000 for winning</b>, plus <b>+1,500 / 1,000 / 500</b> for an A / B / C efficiency grade, and <b>1,000 per move under the benchmark</b>. The benchmark is the number of builds a good player should need: target ÷ levels per build, rounded up, + 1 (3 with the default settings).</li>
       <li>After winning you can keep playing for a higher score, or start again.</li>
       <li>Your best score is saved in this browser.</li>
     </ul>
 
     <h3>Tips</h3>
     <ul>
-      <li>Wide, dense footprints (a high Density with Birth min around 3) stand up to wind much better than thin ones.</li>
+      <li>Dense, wide towers resist wind but cost a lot of material, grade badly and suffer in quakes. Lean, well-connected towers (tubes, lattices, spines) are the way to an A.</li>
+      <li>When the tower is unstable it visibly rocks: the shakier the rating, the bigger the sway.</li>
       <li><b>Build further</b> only works during the Wind phase. It reseeds the chosen level and adds <b>Levels</b> more on top.</li>
       <li>With <b>Build on rubble</b> on, the tower can spread onto the rubble around its base and brace itself.</li>
       <li><b>Clear rubble</b> takes away that support, and anything resting on it falls.</li>
@@ -457,7 +476,8 @@ class CAGrid {
     for (let x = 0; x < this.Width; x++) for (let y = 0; y < this.Length; y++) {
       positions.push({ x, y }); seen.add(K(x, y, 0));
     }
-    if (useRubble) for (const r of rubble.arr) {
+    // On a fixed site the tower can't grow past the plot boundary (rubble inside the plot still supports it)
+    if (useRubble && !this.plotOnly) for (const r of rubble.arr) {
       const k = K(r.x, r.y, 0);
       if (!seen.has(k)) { seen.add(k); positions.push({ x: r.x, y: r.y }); }
     }
@@ -721,6 +741,56 @@ class CAGrid {
     return t;
   }
 
+  aliveCount() { let n = 0; for (const v of this.cells.values()) if (v === true) n++; return n; }
+
+  // Earthquake pulse. Each floor carries the sideways pull of every cube above it, and a stiff tower
+  // (low brace at the top) feels more of the shaking. If the worst floor is overloaded, its most exposed
+  // cubes give way, and anything they held up comes down with them.
+  quakeCheck(falling, rubble, mag, rnd) {
+    const floors = new Map(); let top = -1;
+    for (const [k, v] of this.cells) {
+      if (v !== true) continue;
+      const z = KZ(k);
+      if (!floors.has(z)) floors.set(z, []);
+      floors.get(z).push(k);
+      if (z > top) top = z;
+    }
+    if (top < 2) return false;
+    const stiff = this.brace && this.brace.length ? this.brace[Math.min(top, this.brace.length - 1)] : 1;
+    const shake = mag / (QUAKE_FLEX + stiff);
+    let above = 0, worst = -1, worstRatio = 1;
+    for (let z = top; z >= 0; z--) {
+      const fl = floors.get(z); if (!fl) { above = 0; continue; }
+      const ratio = shake * above / (fl.length * QUAKE_CAPACITY);
+      if (ratio > worstRatio) { worstRatio = ratio; worst = z; }
+      above += fl.length;
+    }
+    if (worst < 0) return false;
+    const fl = floors.get(worst);
+    const share = Math.min(0.35, (worstRatio - 1) * 0.35);
+    const count = Math.max(1, Math.round(fl.length * share));
+    const ranked = fl.map(k => [k, this.neighbours(KX(k), KY(k), KZ(k)) + rnd.nextDouble()]).sort((a, b) => a[1] - b[1]);
+    for (let i = 0; i < count && i < ranked.length; i++) {
+      const k = ranked[i][0], x = KX(k), y = KY(k), z = KZ(k);
+      this.set(x, y, z, false); this.fatigue.delete(k);
+      falling.add({ x, y, z });
+    }
+    this.findUnsupported(falling, rubble);
+    return true;
+  }
+
+  // Whole-tower sway you can see: an unstable tower visibly rocks in the wind, and quakes shake it.
+  globalSway(z, tick) {
+    const top = this.brace ? this.brace.length - 1 : 0;
+    if (top < 3) return 0;
+    const h = Math.min(1, z / top);
+    const amp = (this.stability === "shaky" ? 0.45 : this.stability === "steady" ? 0.18 : 0.04)
+      * (this.windOn ? Math.min(1.6, this.windMulNow || 1) : 0);
+    let s = amp * Math.pow(h, 1.6) * Math.sin(tick * 0.09);
+    if (this.quakeAmp) s += this.quakeAmp * (0.3 + 0.7 * h) * Math.sin(tick * 1.9);
+    return s;
+  }
+
   windInstabilityCheck(falling, rubble, windHeight, windOffset, threshold) {
     let anyFell = false;
     const aliveCells = [];
@@ -776,6 +846,7 @@ class CAGrid {
       for (const r of surface.values()) {
         const { x, y } = r, heightz = r.z;
         if (heightz < z) continue;
+        if (this.plotOnly && (x < 0 || x >= this.Width || y < 0 || y >= this.Length)) continue;
         const seedz = heightz + 1;
         if (seedz >= this.Levels) continue;
         for (let lz = 0; lz < this.Levels; lz++) this.ensure(x, y, lz);
@@ -799,6 +870,7 @@ class CAGrid {
         sway = windOffset * this.windLoad(lz) * this.exposure(lx, ly, lz);
         sway = visSway(dampen(sway, lx, ly, lz, windY, isAlive), this.visThr);
       }
+      sway += this.globalSway(lz, windTick);
       let scale = 1;
       if (taper) { scale = 1 - lz * 0.02; if (scale < 0.4) scale = 0.4; }
       boxes.push(boxAt(lx, ly, lz, scale, sway, windY));
@@ -851,6 +923,7 @@ class CAGrid {
         sway = windOffset * this.windLoad(oz) * this.exposure(ox, oy, oz);
         sway = visSway(dampen(sway, ox, oy, oz, windY, isAlive), this.visThr);
       }
+      sway += this.globalSway(oz, windTick);
       boxes.push(boxAt(ox, oy, oz, taperScale(ox, oy, oz), sway, windY));
     }
     return boxes;
@@ -860,6 +933,22 @@ const PHASE = { idle: 0, generate: 1, falling: 2, wind: 3 };
 // Challenge rules
 const HOLD_GUSTS = 3;        // gusts the tower must survive at or above the target
 const TARGET_BONUS = 500;    // first time a settled build reaches the target
+const CUBE_PENALTY = 3;      // points lost for every cube the wind or an earthquake knocks off
+const MATERIAL_COST = 0.5;    // points per cube a build places, charged when the build settles
+// Earthquakes: some events shake the ground instead of gusting. Each floor has to carry the sideways
+// pull of everything above it, and stiff towers attract more shaking than flexible ones (as real
+// buildings do: stiff structures pick up more of the ground's acceleration). So the dense, wide towers
+// that resist wind best are the ones quakes punish.
+const QUAKE_CHANCE = 0.35;           // share of events that are earthquakes
+const QUAKE_TICKS = 24;              // how long the shaking lasts (about 2.4 s)
+const QUAKE_MIN = 0.6, QUAKE_MAX = 1.2;
+const QUAKE_CAPACITY = 130;          // shaking one cube of a floor can carry, per cube above it
+const QUAKE_FLEX = 0.15;             // stiffness response: shaking × 1 / (QUAKE_FLEX + brace at the top)
+// Efficiency grade = cubes standing in the tower ÷ (height × plot area), how much of the plot's volume is filled.
+// Lower is leaner. Each site needs a grade to win.
+const GRADES = [["A", 0.25], ["B", 0.40], ["C", 0.55], ["D", 0.75], ["E", Infinity]];
+const GRADE_BONUS = { A: 1500, B: 1000, C: 500, D: 0, E: 0 };
+const gradeRank = g => "ABCDE".indexOf(g);
 const WIN_BONUS = 2000;      // for holding the target through HOLD_GUSTS gusts
 const PAR_BONUS = 1000;      // per move under the benchmark, added when you win
 // Wind
@@ -884,7 +973,8 @@ class Simulation {
   }
   // Challenge state: score, target, gusts
   newGame(target) {
-    this.score = 0; this.target = target; this.height = 0; this.bestHeight = 0;
+    this.score = 0; this.cubesLost = 0; this.placed = 0; this.charged = 0; this.target = target; this.height = 0; this.bestHeight = 0;
+    this.quakeTicks = 0; this.quakeMag = 0; this.quakes = 0; this.grade = ""; this.eff = 0; this.gradeShort = false;
     this.targetReached = false; this.windMul = 1; this.gusts = 0;
     this.moves = 0; this.par = 0; this.moveOpen = false;
     this.holding = false; this.holdGusts = 0; this.gustEval = 0; this.won = false; this.startMs = Date.now();
@@ -913,26 +1003,34 @@ class Simulation {
       this.currentLevel = 1; this.phase = PHASE.generate; this.targetLevel = p.levels;
       this.resetRun(); rubble.clear(); falling.clear();
       this.newGame(p.target);
+      this.placed = this.grid.aliveCount();
       this.moves = 1; this.moveOpen = true;
       this.par = Math.ceil(p.target / p.levels) + 1;
     }
     const g = this.grid;
     if (g) {
-      g.RubbleExtent = rubbleExtent; g.Maxstack = maxStack; g.visThr = windThreshold;
+      g.RubbleExtent = rubbleExtent; g.Maxstack = maxStack; g.visThr = windThreshold; g.plotOnly = !!p.plotOnly;
       g.phaseNow = this.phase;
       g.updateBrace(windHeight, p.windY);
     }
 
     // Gusts: while the wind blows, strength ramps up at random intervals
-    if (g && this.phase === PHASE.wind && !p.stopWind && p.gusts) {
+    if (g && this.phase === PHASE.wind && !p.stopWind && (p.gusts || p.quakes)) {
       if (--this.gustIn <= 0) {
-        const inc = GUST_MIN + this.rnd.nextDouble() * (GUST_MAX - GUST_MIN);
-        this.windMul = Math.min(WIND_CAP, this.windMul + inc);
+        const quake = p.quakes && (!p.gusts || this.rnd.nextDouble() < QUAKE_CHANCE);
+        if (quake) {
+          this.quakeMag = QUAKE_MIN + this.rnd.nextDouble() * (QUAKE_MAX - QUAKE_MIN);
+          this.quakeTicks = QUAKE_TICKS; this.quakes++;
+          this.events.push({ type: "quake", mag: this.quakeMag });
+        } else {
+          const inc = GUST_MIN + this.rnd.nextDouble() * (GUST_MAX - GUST_MIN);
+          this.windMul = Math.min(WIND_CAP, this.windMul + inc);
+          this.windCheckcooldown = Math.min(this.windCheckcooldown, 3);
+          this.events.push({ type: "gust", mul: this.windMul });
+        }
         this.gusts++;
         this.gustIn = 40 + this.rnd.next(60);
-        this.windCheckcooldown = Math.min(this.windCheckcooldown, 3);
-        this.events.push({ type: "gust", mul: this.windMul });
-        if (this.holding && !this.won) this.gustEval = 30;   // judge this gust ~3 s later, once any collapse has settled
+        if (this.holding && !this.won) this.gustEval = quake ? QUAKE_TICKS + 30 : 30;   // judge it ~3 s after it ends
       }
     }
     const windStrength = WIND_BASE * this.windMul;   // same for every build size; only gusts change it
@@ -945,16 +1043,20 @@ class Simulation {
     if (p.continueGen && g && this.phase === PHASE.wind) {
       const from = p.continueFromLevel, newTarget = from + p.levels;
       if (newTarget > g.Levels) g.extendLevels(newTarget, rubble);
+      const before = g.aliveCount();
       g.reseedLevel(from, p.seed + from, p.density, rubble, p.useRubble);
+      this.placed += Math.max(0, g.aliveCount() - before);
       this.currentLevel = from + 1; this.targetLevel = newTarget; this.phase = PHASE.generate;
       this.moves++; this.moveOpen = true;
-      this.holding = false; this.holdGusts = 0; this.gustEval = 0;   // building restarts the hold
+      this.holding = false; this.holdGusts = 0; this.gustEval = 0; this.gradeShort = false;   // building restarts the hold
       g.stabDirty = true;
     }
 
     if (this.phase === PHASE.generate && g) {
       if (this.currentLevel < this.targetLevel && this.currentLevel < g.Levels) {
+        const before = g.aliveCount();
         g.generateLevel(this.currentLevel, p.birthMin, p.birthMax, p.surviveMin, rubble, p.useRubble, p.pureBirth);
+        this.placed += Math.max(0, g.aliveCount() - before);
         this.currentLevel++;
       }
       if (this.currentLevel >= this.targetLevel) { g.findUnsupported(falling, rubble); this.phase = PHASE.falling; }
@@ -989,11 +1091,36 @@ class Simulation {
         const windOffset = Math.sin(this.windTick * 0.08) * windStrength;
         if (this.windCheckcooldown > 0) this.windCheckcooldown--;
         else {
+          const before = g.aliveCount();
           this.windCausedFall = g.windInstabilityCheck(falling, rubble, windHeight, windOffset, windThreshold);
+          // Every cube the wind blows off the tower costs points (rubble being pushed around doesn't)
+          const lost = before - g.aliveCount();
+          if (lost > 0) {
+            const pts = lost * CUBE_PENALTY;
+            this.score -= pts; this.cubesLost += lost;
+            this.events.push({ type: "loss", lost, pts, cause: "wind" });
+          }
           if (this.windCausedFall) { this.windFalloffset = windOffset; this.windCheckcooldown = 60; this.phase = PHASE.falling; }
+        }
+        // Earthquake: a shake pulse every 0.6 s while it lasts
+        if (this.quakeTicks > 0 && this.phase === PHASE.wind) {
+          if (--this.quakeTicks % 6 === 0) {
+            const before = g.aliveCount();
+            if (g.quakeCheck(falling, rubble, this.quakeMag, this.rnd)) {
+              const lost = before - g.aliveCount(), pts = lost * CUBE_PENALTY;
+              this.score -= pts; this.cubesLost += lost;
+              this.events.push({ type: "loss", lost, pts, cause: "quake" });
+              this.windCausedFall = true; this.phase = PHASE.falling;
+            }
+          }
         }
       }
       sleep = 100;
+    }
+    if (g) {
+      g.windOn = this.phase === PHASE.wind && !p.stopWind;
+      g.windMulNow = this.windMul;
+      g.quakeAmp = this.quakeTicks > 0 ? 0.12 + 0.18 * this.quakeMag : 0;
     }
 
     if (!g) return null;
@@ -1003,6 +1130,11 @@ class Simulation {
     let h = 0;
     for (const [k, v] of g.cells) if (v === true) { const z = KZ(k) + 1; if (z > h) h = z; }
     this.height = h;
+    // Efficiency grade for this site
+    const area = p.width * p.length;
+    this.standing = g.aliveCount();
+    this.eff = h > 0 ? this.standing / (h * area) : 0;
+    this.grade = h > 0 ? GRADES.find(([, thr]) => this.eff <= thr)[0] : "";
     // Scoring happens only when a player move (New game / Build further) settles
     if (justSettled) {
       if (this.moveOpen) {
@@ -1015,8 +1147,9 @@ class Simulation {
           this.holding = true; this.holdGusts = 0; this.gustEval = 0;
         }
         const pts = gained * 100;
-        this.score += pts + bonus;
-        this.events.push({ type: "move", gained, pts, bonus, height: h, holding: this.holding });
+        const cost = Math.round((this.placed - this.charged) * MATERIAL_COST); this.charged = this.placed;
+        this.score += pts + bonus - cost;
+        this.events.push({ type: "move", gained, pts, bonus, cost, height: h, holding: this.holding });
       }
       this.events.push({ type: "settled" });
     }
@@ -1026,11 +1159,16 @@ class Simulation {
       if (--this.gustEval === 0) {
         if (h >= this.target) {
           this.holdGusts++;
-          if (this.holdGusts >= HOLD_GUSTS) {
+          if (this.holdGusts >= HOLD_GUSTS && gradeRank(this.grade) > gradeRank(p.siteGrade)) {
+            // held, but the tower uses too much material for this site
+            this.holdGusts = HOLD_GUSTS - 1; this.gradeShort = true;
+            this.events.push({ type: "gradeShort", grade: this.grade, need: p.siteGrade });
+          } else if (this.holdGusts >= HOLD_GUSTS) {
             this.won = true; this.holding = false;
-            const bonus = WIN_BONUS + Math.max(0, this.par - this.moves) * PAR_BONUS;
+            const gradeBonus = GRADE_BONUS[this.grade] || 0;
+            const bonus = WIN_BONUS + Math.max(0, this.par - this.moves) * PAR_BONUS + gradeBonus;
             this.score += bonus;
-            this.events.push({ type: "win", bonus, secs: Math.round((Date.now() - this.startMs) / 1000) });
+            this.events.push({ type: "win", bonus, gradeBonus, grade: this.grade, secs: Math.round((Date.now() - this.startMs) / 1000) });
           } else this.events.push({ type: "hold", n: this.holdGusts });
         } else {
           this.holding = false; this.holdGusts = 0;
@@ -1068,7 +1206,8 @@ const SLIDERS = {
   secDisplay: [["cycle", "Day length (seconds)", 20, 240, 10, 90], ["speed", "Simulation speed", 0.25, 4, 0.25, 1]],
 };
 const TOGGLES = {
-  secChallenge: [["gusts", "Random gusts", "Wind picks up at random intervals", true]],
+  secChallenge: [["gusts", "Random gusts", "Wind picks up at random intervals", true],
+    ["quakes", "Earthquakes", "Some events shake the ground instead", true]],
   secRules: [["pureBirth", "Pure birth", "Birth rule only, nothing survives from below", false]],
   secEnv: [
     ["useRubble", "Build on rubble", "Rubble counts as neighbours and as ground", true],
@@ -1108,6 +1247,29 @@ for (const [sec, list] of Object.entries(TOGGLES)) {
     inputs[id] = row.querySelector("input");
   }
 }
+// Sites: each sets the plot size and target, and the efficiency grade you need to win there.
+const SITES = [
+  { name: "Town square", w: 12, l: 12, target: 36, grade: "B", note: "A roomy square plot. Plenty of space for a solid tower, but a B means filling no more than 40% of it." },
+  { name: "Corner plot", w: 10, l: 10, target: 30, grade: "C", note: "A smaller square plot and a lower target. The easiest site to start on." },
+  { name: "Terrace infill", w: 16, l: 7, target: 28, grade: "C", note: "Long and narrow, with only 7 cubes across the wind." },
+  { name: "Needle site", w: 9, l: 9, target: 40, grade: "C", note: "A tight footprint and a tall target. Stiffness is everything." },
+  { name: "Open plaza", w: 18, l: 18, target: 36, grade: "A", note: "Space to spread out, but an A means filling a quarter of it at most, and heavy towers suffer in quakes." },
+  { name: "Custom", grade: "C", note: "Set the width, length and target yourself. The tower can also grow onto rubble outside the plot. Needs a C." },
+];
+const siteSel = document.getElementById("site");
+SITES.forEach((st, i) => siteSel.add(new Option(st.w ? `${st.name} · ${st.w}×${st.l}, ${st.target} high` : st.name, i)));
+function applySite() {
+  const st = SITES[+siteSel.value];
+  document.getElementById("siteNeed").textContent = `needs ${st.grade}`;
+  document.getElementById("siteNote").textContent = st.note;
+  for (const id of ["width", "length", "target"]) inputs[id].disabled = !!st.w;
+  if (st.w) {
+    inputs.width.value = st.w; inputs.length.value = st.l; inputs.target.value = st.target;
+    ["width", "length", "target"].forEach(id => inputs[id]._show());
+  }
+}
+siteSel.onchange = applySite; applySite();
+
 const btnContinue = document.createElement("button");
 btnContinue.textContent = "Build further";
 btnContinue.className = "primary";
@@ -1133,7 +1295,7 @@ function readParams() {
     birthMin: n("birthMin"), birthMax: n("birthMax"), surviveMin: n("surviveMin"),
     continueFromLevel: n("continueFromLevel"), target: n("target"),
     pureBirth: b("pureBirth"), useRubble: b("useRubble"), stopWind: b("stopWind"), windY: b("windY"), taper: b("taper"),
-    gusts: b("gusts"),
+    gusts: b("gusts"), quakes: b("quakes"), siteGrade: SITES[+siteSel.value].grade, plotOnly: !!SITES[+siteSel.value].w,
     ...pending,
   };
   for (const k in pending) pending[k] = false;
@@ -1473,14 +1635,20 @@ function loop() {
       $("wHeight").textContent = `${sim.height} / ${sim.target}`;
       $("wTime").textContent = ev.secs >= 60 ? `${Math.floor(ev.secs / 60)}m ${ev.secs % 60}s` : `${ev.secs}s`;
       const under = Math.max(0, sim.par - sim.moves);
-      $("wBonus").textContent = `+${ev.bonus.toLocaleString()} win bonus` + (under ? ` (including ${under} move${under > 1 ? "s" : ""} under the benchmark)` : "");
+      $("wBonus").textContent = `+${ev.bonus.toLocaleString()} win bonus, including +${ev.gradeBonus.toLocaleString()} for efficiency grade ${ev.grade}` + (under ? ` and ${under} move${under > 1 ? "s" : ""} under the benchmark` : "") + `. ${sim.placed.toLocaleString()} cubes used, ${sim.cubesLost.toLocaleString()} lost.`;
       openModal(winM);
     }
+    else if (ev.type === "loss") {
+      toast("gust", `−${ev.pts.toLocaleString()}<small>${ev.lost} cube${ev.lost === 1 ? "" : "s"} ${ev.cause === "quake" ? "shaken loose" : "blown off"}</small>`, 1200);
+    }
+    else if (ev.type === "quake") toast("gust", `Earthquake!<small>shaking ×${ev.mag.toFixed(2)}, heavy, stiff towers feel it most</small>`, 2000);
+    else if (ev.type === "gradeShort") toast("gust", `Held, but grade ${ev.grade}<small>this site needs ${ev.need}: add lean levels with Build further to raise it</small>`, 3200);
     else if (ev.type === "move") {
-      if (ev.bonus) toast("win", `Target reached!<small>+${(ev.pts + ev.bonus).toLocaleString()}, so now hold it through ${HOLD_GUSTS} gusts</small>`, 2800);
-      else if (ev.holding) toast("win", `+${ev.pts.toLocaleString()}<small>at the target again, so hold it through ${HOLD_GUSTS} gusts</small>`, 2200);
-      else if (ev.gained) toast("win", `+${ev.pts.toLocaleString()}<small>${ev.gained} new level${ev.gained === 1 ? "" : "s"} · height ${ev.height}</small>`, 1800);
-      else toast("gust", `+0<small>no new height (best ${sim.bestHeight})</small>`, 1800);
+      const net = ev.pts + ev.bonus - ev.cost, sign = net >= 0 ? "+" : "−", mat = ` · materials −${ev.cost.toLocaleString()}`;
+      if (ev.bonus) toast("win", `Target reached! ${sign}${Math.abs(net).toLocaleString()}<small>now hold it through ${HOLD_GUSTS} events${mat}</small>`, 2800);
+      else if (ev.holding) toast("win", `${sign}${Math.abs(net).toLocaleString()}<small>at the target again, so hold it through ${HOLD_GUSTS} events${mat}</small>`, 2200);
+      else if (ev.gained) toast(net >= 0 ? "win" : "gust", `${sign}${Math.abs(net).toLocaleString()}<small>${ev.gained} new level${ev.gained === 1 ? "" : "s"} · height ${ev.height}${mat}</small>`, 1800);
+      else toast("gust", `${sign}${Math.abs(net).toLocaleString()}<small>no new height (best ${sim.bestHeight})${mat}</small>`, 1800);
     }
     else if (ev.type === "settled") {
       const top = Math.max(0, sim.height - 1);
@@ -1530,11 +1698,20 @@ function loop() {
     $("stabBar").style.width = `${st === "solid" ? 100 : st === "steady" ? Math.max(40, 80 - gr.lostStrong * 4) : Math.max(8, 35 - gr.lostMild * 3)}%`;
     $("stabBar").style.background = $("stabTxt").style.color;
   } else { $("stabTxt").textContent = "–"; $("stabTxt").style.color = ""; $("stabBar").style.width = "0%"; }
+  const need = SITES[+siteSel.value].grade;
+  if (sim.grade) {
+    const ok = gradeRank(sim.grade) <= gradeRank(need);
+    $("effTxt").textContent = `${sim.grade} · site needs ${need}`;
+    $("effTxt").style.color = ok ? "var(--rubble)" : "#ff6b6b";
+    $("effBar").style.width = `${Math.max(6, Math.min(100, (1 - sim.eff / 0.9) * 100))}%`;
+    $("effBar").style.background = $("effTxt").style.color;
+    $("effTxt").title = `${sim.standing.toLocaleString()} cubes standing in ${sim.height} levels on a ${p.width}×${p.length} plot (${Math.round(sim.eff * 100)}% filled)`;
+  } else { $("effTxt").textContent = `site needs ${need}`; $("effTxt").style.color = ""; $("effBar").style.width = "0%"; }
   const pips = $("pips").children;
   for (let i = 0; i < pips.length; i++) pips[i].classList.toggle("on", sim.won || i < sim.holdGusts);
   $("pips").classList.toggle("active", sim.holding);
   $("holdTxt").textContent = sim.won ? "✓ won"
-    : sim.holding ? (p.gusts ? `gust ${sim.holdGusts} / ${HOLD_GUSTS}` : "turn on gusts")
+    : sim.holding ? (p.gusts || p.quakes ? `event ${sim.holdGusts} / ${HOLD_GUSTS}${sim.gradeShort ? " · grade short" : ""}` : "turn on gusts")
     : sim.targetReached ? "build back up" : "reach the target";
   $("windBar").style.width = `${((sim.windMul - 1) / (WIND_CAP - 1)) * 100}%`;
 

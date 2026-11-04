@@ -17,8 +17,9 @@ This started as a Grasshopper C# component. The web version keeps the original r
 
 **To win:** reach the target height with a settled build, then hold it through **3 gusts in a row** without building. If a gust knocks the tower below the target, the count resets. When you win, a "Successful! You did it." panel lets you keep playing, play again or reset.
 
-Points come only from your moves (**New game** or **Build further**) and from winning:
+Points come from your moves (**New game** or **Build further**) and from winning:
 
+- **−½ per cube** a build places (materials), and **−3 per cube** the wind blows off or a quake shakes loose. The score can go below 0.
 - **+100 per new level** above your best height so far. Rebuilding lost height scores nothing.
 - **+500** the first time a settled build reaches the target.
 - **+2,000 for winning**, plus **1,000 per move under the benchmark**. The benchmark is the number of builds a good player should need: target ÷ levels per build, rounded up, + 1 (3 with the default settings).
@@ -27,6 +28,14 @@ Points come only from your moves (**New game** or **Build further**) and from wi
 ### Wind
 
 The wind gets stronger with height (its push grows with height^0.4, as real wind does). Gusts make it 10–30% stronger every few seconds, up to ×3, and each new build halves the extra wind. Cubes visibly lean with the wind, never more than about a third of a cube, and when one leans too far it snaps off and falls. Rubble piles stay put, but loose blocks on top can still be blown off.
+
+### Sites, efficiency and earthquakes
+
+- **Sites** fix the plot size and target height, and set the efficiency grade you need to win: Town square (12×12, 36 high, needs B), Corner plot (10×10, 30, C), Terrace infill (16×7, 28, C), Needle site (9×9, 40, C), Open plaza (18×18, 36, A), or Custom (your own sliders, C). On a fixed site the tower can't grow past the plot boundary.
+- **Efficiency** = cubes standing in the tower ÷ (height × plot area), i.e. how much of the plot's volume it fills. A ≤ 25%, B ≤ 40%, C ≤ 55%, D ≤ 75%, else E. A win needs the site's grade and adds +1,500 / 1,000 / 500 for A / B / C.
+- **Earthquakes** replace about a third of the gusts. Each floor carries the sideways pull of the cubes above it, and stiff towers pick up more of the shaking, so dense, wide towers that resist wind suffer most. An overloaded floor loses its most exposed cubes.
+- **Visible sway:** unstable towers rock as a whole in the wind (Shaky the most), and quakes shake them.
+- Winning now means holding the target through **3 events** (gusts or quakes) **and** meeting the site's grade.
 
 ### Stability
 
