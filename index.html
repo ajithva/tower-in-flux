@@ -297,8 +297,13 @@
     <p>About a third of events are earthquakes instead of gusts. The ground shakes for a couple of seconds, and each floor has to carry the sideways pull of every cube above it. Stiff towers pick up more of the shaking than flexible ones, as real buildings do, so the dense, wide towers that shrug off wind are the ones quakes hurt. An overloaded floor loses its most exposed cubes, and anything they held up comes down too. Turn quakes off under <b>Challenge</b> if you want wind only.</p>
 
     <h3>Sites and efficiency</h3>
-    <p>Each <b>site</b> fixes the plot size and the target height, and sets the <b>efficiency grade</b> you need to win. Efficiency = (cubes standing + cubes eroded from the levels still standing) ÷ (height × plot area): how much of the plot's volume the tower fills. Erosion still counts against you, so a battered tower doesn't get "leaner", but levels that blew away and were rebuilt start fresh. On a fixed site the tower can't grow past the plot boundary. <b>A</b> ≤ 25%, <b>B</b> ≤ 40%, <b>C</b> ≤ 55%, <b>D</b> ≤ 75%, otherwise <b>E</b>. Dense rules fill most of the plot and grade D or E, so you'll need sparser rules (lower Birth max, higher Survive min) that still stand up to the wind. Adding lean levels with <b>Build further</b> can raise your grade, and every cube still costs material whether it stays or not. <b>Custom</b> lets you set the plot yourself and needs a C.</p>
-    <p>Sites also have their own <b>hazards</b>. The <b>Harbour wall</b> and <b>Hilltop mast</b> have strong wind and no quakes, and only need a D, so a dense, sturdy tower is the right answer there, though not a completely solid block. The <b>Fault line</b> has light wind but frequent quakes, so heavy towers shake apart and light, flexible ones do best. Read each site's note before you build.</p>
+    <p>Each <b>site</b> fixes the plot (shown as a dashed red line on the ground), the target height, its <b>hazards</b> (wind strength and how often quakes happen) and the <b>efficiency grade</b> you need to win. The tower can't grow past the plot boundary.</p>
+    <p><b>Efficiency</b> measures how well you used material <i>for that site</i>, not just how little:</p>
+    <ul>
+      <li><b>Waste:</b> the share of all the cubes you've placed that are no longer standing, whether they collapsed after a build, blew off or shook loose.</li>
+      <li><b>Over-building:</b> each site has an <b>ideal fill</b>, the share of the plot's volume a well-judged tower should use. Windy sites need mass (the Harbour wall's ideal is 85%), quake sites need lightness (the Fault line's is 30%). Filling more than the ideal counts against you.</li>
+    </ul>
+    <p>Efficiency = 100% − half the waste − half the over-building. <b>A</b> ≥ 80%, <b>B</b> ≥ 65%, <b>C</b> ≥ 50%, <b>D</b> ≥ 35%, otherwise <b>E</b>. So a solid tower grown with rules that waste little can grade A on a windy site and badly on a quake-prone one, and a lacy tower that drops most of its cubes while growing isn't efficient anywhere. The meter waits until the tower is at least 6 levels and a quarter of the target tall, and the grade says <b>so far</b> until you reach the target. Tap or hover over it to see the breakdown.</p>
 
     <h3>Scoring</h3>
     <p><b>To win:</b> reach the target height with a settled build, with an efficiency grade at least as good as the site needs. About 3 seconds after the build settles the tower is checked: if it's still at the target and lean enough, you win. It also has to have survived at least <b>2 gusts or quakes</b> during the game, so if you get there very fast, it waits for them. Gusts and quakes keep hitting it between builds, so it has to survive them on the way up. If it's tall enough but the grade is short, add lean levels with <b>Build further</b> or start again with sparser rules.</p>
@@ -943,6 +948,7 @@ class CAGrid {
 const PHASE = { idle: 0, generate: 1, falling: 2, wind: 3 };
 // Challenge rules
 const SETTLE_CHECK = 30;     // a build that reaches the target is checked ~3 s later: still at the target and lean enough → win
+const MIN_RATE_LEVELS = 6;   // stability and efficiency are only shown once the tower is this tall (and a quarter of the target)
 const MIN_EVENTS = 2;        // gusts or quakes the tower must have survived during the game before it can win
 const TARGET_BONUS = 500;    // first time a settled build reaches the target
 const CUBE_PENALTY = 3;      // points lost for every cube the wind or an earthquake knocks off
@@ -957,10 +963,14 @@ const QUAKE_TICKS = 24;              // how long the shaking lasts (about 2.4 s)
 const QUAKE_MIN = 0.6, QUAKE_MAX = 1.2;
 const QUAKE_CAPACITY = 130;          // shaking one cube of a floor can carry, per cube above it
 const QUAKE_FLEX = 0.15;             // stiffness response: shaking × 1 / (QUAKE_FLEX + brace at the top)
-// Efficiency grade = (cubes standing + cubes eroded from the levels still standing) ÷ (height × plot area).
-// Eroded cubes still count, so a tower can't get 'leaner' by being battered; a top that blew off and was rebuilt doesn't.
-// Lower is leaner. Each site needs a grade to win.
-const GRADES = [["A", 0.25], ["B", 0.40], ["C", 0.55], ["D", 0.75], ["E", Infinity]];
+// Efficiency: how well the material is used FOR THIS SITE, from two parts:
+//   waste      = share of all cubes placed that are no longer standing (collapsed after a build, blown off, shaken loose)
+//   overbuild  = how far the tower's fill (cubes ÷ height × plot area) goes past the site's ideal fill, scaled 0…1
+//   efficiency = 1 − (WASTE_WEIGHT × waste + (1 − WASTE_WEIGHT) × overbuild)        1 = perfect
+// Each site has an ideal fill set by its hazards: windy sites need mass, quake sites need lightness. So a solid tower
+// grown with rules that waste little can be efficient on a windy site and wasteful on a quake-prone one.
+const WASTE_WEIGHT = 0.5;
+const GRADES = [["A", 0.8], ["B", 0.65], ["C", 0.5], ["D", 0.35], ["E", -Infinity]];
 const GRADE_BONUS = { A: 1500, B: 1000, C: 500, D: 0, E: 0 };
 const gradeRank = g => "ABCDE".indexOf(g);
 const WIN_BONUS = 2000;      // for reaching the target at the site's grade
@@ -1158,10 +1168,13 @@ class Simulation {
     // Efficiency grade for this site
     const area = p.width * p.length;
     this.standing = g.aliveCount();
-    let eroded = 0; for (let z = 0; z < h && z < this.lostAt.length; z++) eroded += this.lostAt[z] || 0;
-    this.eroded = eroded;
-    this.eff = h > 0 ? (this.standing + eroded) / (h * area) : 0;
-    this.grade = h > 0 ? GRADES.find(([, thr]) => this.eff <= thr)[0] : "";
+    const ideal = p.siteFill ?? 0.45;
+    this.fill = h > 0 ? this.standing / (h * area) : 0;
+    this.waste = this.placed > 0 ? Math.max(0, 1 - this.standing / this.placed) : 0;
+    this.overbuild = Math.min(1, Math.max(0, this.fill - ideal) / (1 - ideal));
+    this.idealFill = ideal;
+    this.eff = h > 0 ? 1 - (WASTE_WEIGHT * this.waste + (1 - WASTE_WEIGHT) * this.overbuild) : 0;
+    this.grade = h > 0 ? GRADES.find(([, thr]) => this.eff >= thr)[0] : "";
     // Scoring happens only when a player move (New game / Build further) settles
     if (justSettled) {
       if (this.moveOpen) {
@@ -1281,25 +1294,26 @@ for (const [sec, list] of Object.entries(TOGGLES)) {
 }
 // Sites: each sets the plot size and target, and the efficiency grade you need to win there.
 const SITES = [
-  // wind: multiplies the base wind · quake: share of events that are earthquakes · grade: needed to win
-  { name: "Town square", w: 12, l: 12, target: 36, grade: "B", wind: 1, quake: 0.2,
-    note: "A roomy square plot with ordinary wind and the odd quake. A B means filling no more than 40% of it." },
-  { name: "Corner plot", w: 10, l: 10, target: 30, grade: "C", wind: 1, quake: 0.35,
+  // wind: multiplies the base wind · quake: share of events that are earthquakes · fill: the site's ideal fill
+  // (how much of the plot's volume a well-judged tower should use) · grade: the efficiency grade needed to win
+  { name: "Town square", w: 12, l: 12, target: 36, grade: "B", wind: 1, quake: 0.2, fill: 0.35,
+    note: "A roomy square plot with ordinary wind and the odd quake. Ideal fill 35%: a light tower that wastes little does best." },
+  { name: "Corner plot", w: 10, l: 10, target: 30, grade: "C", wind: 1, quake: 0.35, fill: 0.45,
     note: "A smaller plot and a lower target. The easiest site to start on." },
-  { name: "Harbour wall", w: 12, l: 12, target: 32, grade: "D", wind: 1.35, quake: 0,
-    note: "Strong sea wind and no earthquakes. Mass helps here, but a D still means filling no more than 75% of the plot, so not a solid block." },
-  { name: "Hilltop mast", w: 10, l: 10, target: 30, grade: "D", wind: 1.45, quake: 0,
-    note: "Brutal wind and no quakes. Only stiff, dense towers survive up here, but they still have to make a D, and every cube the wind strips counts against it." },
-  { name: "Terrace infill", w: 16, l: 7, target: 28, grade: "C", wind: 1, quake: 0.35,
+  { name: "Harbour wall", w: 12, l: 12, target: 32, grade: "B", wind: 1.35, quake: 0, fill: 0.85,
+    note: "Strong sea wind and no earthquakes. Ideal fill 85%: a thick, solid tower is efficient here, as long as little of it falls away." },
+  { name: "Hilltop mast", w: 10, l: 10, target: 30, grade: "C", wind: 1.45, quake: 0, fill: 0.9,
+    note: "Brutal wind and no quakes. Only stiff, dense towers survive, and a solid one counts as efficient here." },
+  { name: "Terrace infill", w: 16, l: 7, target: 28, grade: "C", wind: 1, quake: 0.35, fill: 0.45,
     note: "Long and narrow, with only 7 cubes across the wind." },
-  { name: "Needle site", w: 9, l: 9, target: 40, grade: "C", wind: 0.9, quake: 0.35,
+  { name: "Needle site", w: 9, l: 9, target: 40, grade: "C", wind: 0.9, quake: 0.35, fill: 0.5,
     note: "A tight footprint and a tall target. Stiffness is everything." },
-  { name: "Fault line", w: 14, l: 14, target: 30, grade: "C", wind: 0.7, quake: 0.75,
-    note: "Light wind but frequent earthquakes. Heavy, stiff towers shake apart, so build light and flexible." },
-  { name: "Open plaza", w: 18, l: 18, target: 36, grade: "B", wind: 0.9, quake: 0.3,
-    note: "Space to spread out, but a big tower is heavy, so quakes hit it hard, and a B means filling no more than 40% of the plot." },
-  { name: "Custom", grade: "C", wind: 1, quake: 0.35,
-    note: "Set the width, length and target yourself. The tower can also grow onto rubble outside the plot. Needs a C." },
+  { name: "Fault line", w: 14, l: 14, target: 30, grade: "C", wind: 0.7, quake: 0.75, fill: 0.3,
+    note: "Light wind but frequent earthquakes. Ideal fill 30%: heavy, stiff towers shake apart, so build light and flexible." },
+  { name: "Open plaza", w: 18, l: 18, target: 36, grade: "B", wind: 0.9, quake: 0.3, fill: 0.3,
+    note: "Space to spread out, but a big tower is heavy, so quakes hit it hard. Ideal fill 30%." },
+  { name: "Custom", grade: "C", wind: 1, quake: 0.35, fill: 0.45,
+    note: "Set the width, length and target yourself. The tower can also grow onto rubble outside the plot. Ideal fill 45%, needs a C." },
 ];
 const siteSel = document.getElementById("site");
 SITES.forEach((st, i) => siteSel.add(new Option(st.w ? `${st.name} · ${st.w}×${st.l}, ${st.target} high` : st.name, i)));
@@ -1342,7 +1356,7 @@ function readParams() {
     continueFromLevel: n("continueFromLevel"), target: n("target"),
     pureBirth: b("pureBirth"), useRubble: b("useRubble"), stopWind: b("stopWind"), windY: b("windY"), taper: b("taper"),
     gusts: b("gusts"), quakes: b("quakes"), siteGrade: SITES[+siteSel.value].grade, plotOnly: !!SITES[+siteSel.value].w,
-    windScale: SITES[+siteSel.value].wind, quakeChance: SITES[+siteSel.value].quake,
+    windScale: SITES[+siteSel.value].wind, quakeChance: SITES[+siteSel.value].quake, siteFill: SITES[+siteSel.value].fill,
     ...pending,
   };
   for (const k in pending) pending[k] = false;
@@ -1402,7 +1416,29 @@ const ground = new THREE.Mesh(new THREE.PlaneGeometry(1200, 1200), new THREE.Sha
 ground.receiveShadow = true;
 scene.add(ground);
 
-// Stars (fade in at night)
+// Site boundary: a red strip on the ground around the plot (like the red line on a site plan) and a faint tint inside it
+const siteGroup = new THREE.Group();
+const siteEdgeMat = new THREE.MeshBasicMaterial({ color: "#ff4d42", toneMapped: false, transparent: true, opacity: 0.9, depthWrite: false });
+const siteFillMat = new THREE.MeshBasicMaterial({ color: "#ff4d42", toneMapped: false, transparent: true, opacity: 0.08, depthWrite: false });
+scene.add(siteGroup);
+let drawnPlot = "";
+function drawSite(w, l) {
+  siteGroup.children.forEach(c => c.geometry.dispose());
+  siteGroup.clear();
+  const m = 0.5, t = 0.22, z = 0.02;   // cubes sit on whole numbers, so the plot edge is half a cube outside them
+  const x0 = -m, x1 = w - m, y0 = -m, y1 = l - m;
+  const strip = (cx, cy, sx, sy) => {
+    const s = new THREE.Mesh(new THREE.PlaneGeometry(sx, sy), siteEdgeMat);
+    s.position.set(cx, cy, z + 0.005); s.renderOrder = 2; siteGroup.add(s);
+  };
+  strip((x0 + x1) / 2, y0 - t / 2, x1 - x0 + 2 * t, t);   // the strip sits just outside the plot
+  strip((x0 + x1) / 2, y1 + t / 2, x1 - x0 + 2 * t, t);
+  strip(x0 - t / 2, (y0 + y1) / 2, t, y1 - y0);
+  strip(x1 + t / 2, (y0 + y1) / 2, t, y1 - y0);
+  const fill = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, y1 - y0), siteFillMat);
+  fill.position.set((x0 + x1) / 2, (y0 + y1) / 2, z); fill.renderOrder = 1; siteGroup.add(fill);
+}
+
 const stars = (() => {
   const n = 900, arr = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
@@ -1457,6 +1493,7 @@ function writeLayer(layer, boxes, colorFn) {
 // Scene extents, used to place the sun/moon and size the shadow camera
 const world = { cx: 5.5, cy: 5.5, h: 18, r: 38 };
 function frame(w, l, lv) {
+  drawSite(w, l);
   const cx = (w - 1) / 2, cy = (l - 1) / 2, cz = lv / 2;
   const size = Math.max(w, l, lv);
   // On a narrow (phone) screen the score strip covers the top, so aim a little higher (the tower sits lower)
@@ -1686,7 +1723,7 @@ function loop() {
       $("wHeight").textContent = `${sim.height} / ${sim.target}`;
       $("wTime").textContent = ev.secs >= 60 ? `${Math.floor(ev.secs / 60)}m ${ev.secs % 60}s` : `${ev.secs}s`;
       const under = Math.max(0, sim.par - sim.moves);
-      $("wBonus").textContent = `+${ev.bonus.toLocaleString()} win bonus, including +${ev.gradeBonus.toLocaleString()} for efficiency grade ${ev.grade}` + (under ? ` and ${under} move${under > 1 ? "s" : ""} under the benchmark` : "") + `. ${sim.placed.toLocaleString()} cubes used, ${sim.cubesLost.toLocaleString()} lost.`;
+      $("wBonus").textContent = `+${ev.bonus.toLocaleString()} win bonus, including +${ev.gradeBonus.toLocaleString()} for efficiency grade ${ev.grade}` + (under ? ` and ${under} move${under > 1 ? "s" : ""} under the benchmark` : "") + `. ${Math.round(sim.fill * 100)}% of the plot filled (ideal ${Math.round(sim.idealFill * 100)}%), ${Math.round(sim.waste * 100)}% of ${sim.placed.toLocaleString()} cubes wasted.`;
       openModal(winM);
     }
     else if (ev.type === "loss") {
@@ -1709,6 +1746,9 @@ function loop() {
   }
   sim.events.length = 0;
 
+  // keep the site boundary in step with the chosen plot (a running game keeps its own plot)
+  const plotKey = sim.grid ? `${sim.grid.Width}x${sim.grid.Length}` : `${p.width}x${p.length}`;
+  if (plotKey !== drawnPlot) { drawnPlot = plotKey; const [pw, pl] = plotKey.split("x").map(Number); drawSite(pw, pl); }
   if (out) {
     if (needsFraming) { frame(p.width, p.length, Math.max(sim.targetLevel, sim.target)); needsFraming = false; }
     const [towerBoxes, litBoxes] = splitWindows(out.A, performance.now() / 1000, sim.grid);
@@ -1740,7 +1780,13 @@ function loop() {
   $("heightBar").style.width = `${Math.min(100, (sim.height / target) * 100)}%`;
   $("heightBar").classList.toggle("done", sim.targetReached);
   $("windTxt").textContent = `×${sim.windMul.toFixed(2)}`;
-  if (sim.grid && sim.grid.stability) {
+  // Too short to judge: a handful of cubes isn't a tower yet, so don't rate it
+  const rateable = sim.height >= Math.max(MIN_RATE_LEVELS, Math.ceil(target * 0.25));
+  const narrowUI0 = window.innerWidth <= 760;
+  if (sim.grid && sim.grid.stability && !rateable) {
+    $("stabTxt").textContent = narrowUI0 ? "too short" : "too short to rate"; $("stabTxt").style.color = ""; $("stabTxt").title = "";
+    $("stabBar").style.width = "0%";
+  } else if (sim.grid && sim.grid.stability) {
     const gr = sim.grid, st = gr.stability;
     const lost = st === "shaky" ? gr.lostMild : gr.lostStrong;
     $("stabTxt").textContent = `${st === "solid" ? "Solid" : st === "steady" ? "Steady" : "Shaky"}${gr.shape ? " · " + gr.shape : ""}${lost ? ` · −${lost}` : ""}`;
@@ -1751,13 +1797,18 @@ function loop() {
   } else { $("stabTxt").textContent = "–"; $("stabTxt").style.color = ""; $("stabBar").style.width = "0%"; }
   const need = SITES[+siteSel.value].grade;
   const narrowUI = window.innerWidth <= 760;   // phones get shorter wording so it fits the score strip
-  if (sim.grade) {
+  if (sim.grade && !rateable) {
+    $("effTxt").textContent = narrowUI ? `needs ${need}` : `site needs ${need}`;
+    $("effTxt").style.color = ""; $("effTxt").title = "Rated once the tower is at least a quarter of the target height";
+    $("effBar").style.width = "0%";
+  } else if (sim.grade) {
     const ok = gradeRank(sim.grade) <= gradeRank(need);
-    $("effTxt").textContent = narrowUI ? `${sim.grade} · needs ${need}` : `${sim.grade} · site needs ${need}`;
+    const soFar = sim.height < target && !sim.won ? " so far" : "";
+    $("effTxt").textContent = `${sim.grade}${soFar} · needs ${need}`;
     $("effTxt").style.color = ok ? "var(--rubble)" : "#ff6b6b";
-    $("effBar").style.width = `${Math.max(6, Math.min(100, (1 - sim.eff / 0.9) * 100))}%`;
+    $("effBar").style.width = `${Math.max(6, Math.min(100, sim.eff * 100))}%`;
     $("effBar").style.background = $("effTxt").style.color;
-    $("effTxt").title = `${sim.standing.toLocaleString()} cubes standing in ${sim.height} levels on a ${p.width}×${p.length} plot (${Math.round(sim.eff * 100)}% filled)`;
+    $("effTxt").title = `Efficiency ${Math.round(sim.eff * 100)}%: ${Math.round(sim.fill * 100)}% of the plot filled (this site's ideal is ${Math.round(sim.idealFill * 100)}%), ${Math.round(sim.waste * 100)}% of the cubes placed wasted`;
   } else { $("effTxt").textContent = narrowUI ? `needs ${need}` : `site needs ${need}`; $("effTxt").style.color = ""; $("effBar").style.width = "0%"; }
   $("holdTxt").textContent = sim.won ? "✓ won"
     : sim.holding ? (p.stopWind ? (narrowUI ? "start wind" : "start the wind to check") : sim.waitingEvents ? (narrowUI ? `events ${sim.gusts}/${MIN_EVENTS}` : `survive ${MIN_EVENTS} events (${sim.gusts}/${MIN_EVENTS})`) : "checking…")

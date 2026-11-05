@@ -31,25 +31,25 @@ The wind gets stronger with height (its push grows with height^0.4, as real wind
 
 ### Sites, efficiency and earthquakes
 
-- **Sites** fix the plot size and target height, set the efficiency grade you need, and have their own wind strength and share of earthquakes. On a fixed site the tower can't grow past the plot boundary.
+- **Sites** fix the plot (drawn as a dashed red line on the ground), the target height, the hazards and the efficiency grade you need to win. The tower can't grow past the plot boundary.
 
-  | Site | Plot | Target | Grade | Wind | Quakes |
-  |---|---|---|---|---|---|
-  | Town square | 12×12 | 36 | B | ×1 | 20% |
-  | Corner plot | 10×10 | 30 | C | ×1 | 35% |
-  | Harbour wall | 12×12 | 32 | D | ×1.35 | none |
-  | Hilltop mast | 10×10 | 30 | D | ×1.45 | none |
-  | Terrace infill | 16×7 | 28 | C | ×1 | 35% |
-  | Needle site | 9×9 | 40 | C | ×0.9 | 35% |
-  | Fault line | 14×14 | 30 | C | ×0.7 | 75% |
-  | Open plaza | 18×18 | 36 | B | ×0.9 | 30% |
-  | Custom | sliders | slider | C | ×1 | 35% |
+  | Site | Plot | Target | Wind | Quakes | Ideal fill | Grade needed |
+  |---|---|---|---|---|---|---|
+  | Town square | 12×12 | 36 | ×1 | 20% | 35% | B |
+  | Corner plot | 10×10 | 30 | ×1 | 35% | 45% | C |
+  | Harbour wall | 12×12 | 32 | ×1.35 | none | 85% | B |
+  | Hilltop mast | 10×10 | 30 | ×1.45 | none | 90% | C |
+  | Terrace infill | 16×7 | 28 | ×1 | 35% | 45% | C |
+  | Needle site | 9×9 | 40 | ×0.9 | 35% | 50% | C |
+  | Fault line | 14×14 | 30 | ×0.7 | 75% | 30% | C |
+  | Open plaza | 18×18 | 36 | ×0.9 | 30% | 30% | B |
+  | Custom | sliders | slider | ×1 | 35% | 45% | C |
 
-  The windy, quake-free Harbour wall and Hilltop mast reward dense, sturdy towers (but not solid blocks: they still need a D); the Fault line rewards light, flexible ones.
-- **Efficiency** = (cubes standing + cubes eroded from the levels still standing) ÷ (height × plot area). Erosion still counts, so a battered tower doesn't get 'leaner'; levels that blew away and were rebuilt start fresh. A ≤ 25%, B ≤ 40%, C ≤ 55%, D ≤ 75%, else E. A win needs the site's grade and adds +1,500 / 1,000 / 500 for A / B / C.
-- **Earthquakes** replace about a third of the gusts. Each floor carries the sideways pull of the cubes above it, and stiff towers pick up more of the shaking, so dense, wide towers that resist wind suffer most. An overloaded floor loses its most exposed cubes.
+- **Efficiency** is how well the material is used for that site: 100% − ½ × waste − ½ × over-building. *Waste* is the share of all cubes placed that are no longer standing (collapsed after a build, blown off, shaken loose). *Over-building* is how far the tower's fill (cubes ÷ height × plot area) goes past the site's ideal fill. A ≥ 80%, B ≥ 65%, C ≥ 50%, D ≥ 35%, else E. A win needs the site's grade and adds +1,500 / 1,000 / 500 for A / B / C. So a solid tower that wastes little is efficient on the windy Harbour wall, and over-built on the quake-prone Fault line.
+- **Earthquakes** replace a share of the gusts (set by the site). Each floor carries the sideways pull of the cubes above it, and stiff towers pick up more of the shaking, so dense towers that resist wind suffer most.
 - **Visible sway:** unstable towers rock as a whole in the wind (Shaky the most), and quakes shake them.
-- **Winning:** a settled build reaches the target at the site's grade, is still standing about 3 seconds later, and the tower has survived at least 2 gusts or quakes during the game. There's no separate hold phase: it has to survive them between builds on the way up.
+- **Winning:** a settled build reaches the target at the site's grade, is still standing about 3 seconds later, and the tower has survived at least 2 gusts or quakes during the game.
+- The Stability and Efficiency meters wait until the tower is at least 6 levels and a quarter of the target tall.
 
 ### Stability
 
