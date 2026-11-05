@@ -35,38 +35,36 @@ The wind gets stronger with height (its push grows with height^0.4, as real wind
 
   | Site | Plot | Target | Wind | Quakes | Ideal fill | Grade needed |
   |---|---|---|---|---|---|---|
-  | Town square | 12×12 | 36 | ×1 | 20% | 35% | B |
+  | Town square | 12×12 | 36 | ×0.85 | 20% | 35% | B |
   | Corner plot | 10×10 | 30 | ×1 | 35% | 45% | C |
   | Harbour wall | 12×12 | 32 | ×1.35 | none | 85% | B |
   | Hilltop mast | 10×10 | 30 | ×1.45 | none | 90% | C |
-  | Terrace infill | 16×7 | 28 | ×1 | 35% | 45% | C |
-  | Needle site | 9×9 | 40 | ×0.9 | 35% | 50% | C |
-  | Fault line | 14×14 | 30 | ×0.7 | 75% | 30% | C |
+  | Terrace infill | 16×7 | 28 | ×1 | 35% | 45% | B |
+  | Needle site | 9×9 | 40 | ×0.9 | 35% | 50% | B |
+  | Fault line | 14×14 | 30 | ×0.7 | 75% | 30% | B |
   | Open plaza | 18×18 | 36 | ×0.9 | 30% | 30% | B |
   | Custom | sliders | slider | ×1 | 35% | 45% | C |
 
 - **Efficiency** is how well the material is used for that site: 100% − ½ × waste − ½ × over-building. *Waste* is the share of all cubes placed that are no longer standing (collapsed after a build, blown off, shaken loose). *Over-building* is how far the tower's fill (cubes ÷ height × plot area) goes past the site's ideal fill. A ≥ 80%, B ≥ 65%, C ≥ 50%, D ≥ 35%, else E. A win needs the site's grade and adds +1,500 / 1,000 / 500 for A / B / C. So a solid tower that wastes little is efficient on the windy Harbour wall, and over-built on the quake-prone Fault line.
 - **Earthquakes** replace a share of the gusts (set by the site). Each floor carries the sideways pull of the cubes above it, and stiff towers pick up more of the shaking, so dense towers that resist wind suffer most.
 - **Visible sway:** unstable towers rock as a whole in the wind (Shaky the most), and quakes shake them.
-- **Winning:** a settled build reaches the target at the site's grade, is still standing about 3 seconds later, and the tower has survived at least 2 gusts or quakes during the game.
+- **Winning:** a settled build reaches the target at the site's grade, is still standing about 3 seconds later, and the tower has survived at least 3 gusts or quakes during the game.
 - The Stability and Efficiency meters wait until the tower is at least 6 levels and a quarter of the target tall.
 
 ### Stability
 
-The tower is treated as a simplified cantilever, so different shapes can win:
+The tower is treated as a simplified structure, so there's more than one way to make it stand:
 
-- **Stiffness comes from where the cubes are.** Each floor's resistance to bending is its second moment of area along the wind: cubes far from the middle count most, like a tube skyscraper's frame. A hollow ring can be as stiff as a solid block.
-- **Wind load** on a floor = width facing the wind × how solid the floor is (gaps let wind through) × the wind strength at that height.
-- **Bending adds up from the top down.** Each floor carries the wind on everything above it, so wide bases and tapered tops help, and thin necks and top-heavy floors hurt.
-- **Bracing:** a cube resting on another cube is braced by it (it counts as an extra neighbour), so open but well-connected lattices aren't brittle.
-- **Spines:** cubes on an unbroken column from the ground sway 25% less.
-- **Erosion:** when edge cubes snap, the cubes behind them are exposed next, so a tower erodes from the outside in.
-- **Overhangs:** a cube with nothing directly beneath it is 30% weaker.
-- **Fatigue:** exposed cubes slowly lose up to half their strength under repeated gusts. Cubes boxed in on six or more sides, and every cube in a Solid tower, don't wear out.
+- **Where the cubes are, not how many:** each floor's stiffness is its second moment of area along the wind, so cubes far from the middle count most and a hollow tube can be as stiff as a solid block.
+- **Connections in 3D:** a cube is braced by its neighbours on the same floor, the cubes directly above and below, and those diagonally above and below, so well-connected open frames are stiff even when mostly empty.
+- **Tapering:** a tower that narrows evenly as it rises sways up to 35% less.
+- **Setbacks and podiums:** where a floor shrinks to under 60% of the one below, the part above bends from there (plus 35% of the podium's height), so a slim tower on a wide base can stand.
+- **Cores:** cubes on an unbroken column from the ground sway 40% less.
+- **Porosity:** an open floor catches as little as 20% of the wind of a solid one.
+- **Bending adds up from the top down:** top-heavy floors and thin necks hurt, and a cube with nothing directly beneath it is 30% weaker.
+- **Erosion and wear:** when edge cubes snap, the cubes behind them are exposed next; cubes pushed past 85% of their strength slowly lose up to half of it.
 
-The **Stability** meter plays out a gust on a copy of the tower (edge cubes snapping, the next layer being exposed, unsupported cubes falling) and reports how many levels it would lose. **Solid** loses none even at the strongest wind (×3), **Steady** loses levels only at ×3, and **Shaky** already loses levels at ×1.5. A number like **−4** is the levels a ×3 gust would erode (or a ×1.5 gust for a Shaky tower). It also names the shape it sees: tapered, tube, lattice, spine or top-heavy. The prediction runs every 1.5 seconds while the wind blows. All the constants are near the top of the script.
-
-In 36 simulated games across three growth rule sets, two densities, three widths and two build sizes, about 56% were won. Width mattered most (8 wide: none, 16 wide: all), every rule set won about half its games, and the labels predicted the outcome: every Steady and Solid tower held, and only a third of Shaky ones did.
+The **Stability** meter plays out a gust on a copy of the tower and reports how many levels it would lose: **Solid** loses none even at the strongest wind (×3), **Steady** loses levels only at ×3, **Shaky** already at ×1.5. It also names the shape it sees: tapered, setback, tube, lattice, spine or top-heavy. All the constants are near the top of the script.
 
 ### Colours
 

@@ -291,8 +291,18 @@
 
     <h3>Gusts</h3>
     <p>While the wind blows, it picks up in random gusts every few seconds, each adding 10–30% more strength, up to ×3. Cubes visibly lean with the wind, and when one leans too far it snaps off and falls. Rubble piles stay put, but loose blocks on top can still be blown off. The wind gets stronger the higher you go, so every extra level catches more of it. Tall, thin and exposed blocks go first. Each new build halves the extra wind.</p>
-    <p><b>Stability.</b> The tower behaves like a simple real structure. A floor's stiffness depends on <i>where</i> its cubes are: cubes far from the middle stiffen it most, like the frame of a tube skyscraper, so a hollow ring can be as strong as a solid block. Each floor also carries the wind on every floor above it, so wide bases and tapering tops help, while thin "necks" and top-heavy floors hurt. Gaps let some wind through, a cube resting on another cube is braced by it, cubes on an unbroken column from the ground (a spine) are anchored, and cubes with nothing directly beneath them are weaker. When edge cubes snap, the ones behind them are exposed next, so a tower erodes from the outside in. Exposed cubes also slowly wear out under repeated gusts.</p>
-    <p>The <b>Stability</b> meter rates the top of your tower: <b>Solid</b> (holds its height even in the strongest gusts, and never wears out), <b>Steady</b> (only the strongest gusts cost it levels) or <b>Shaky</b> (even mild gusts do), and names the shape it sees: tapered, tube, lattice, spine or top-heavy. A number like <b>−4</b> means a gust would erode about 4 levels off the top, so build that much above the target or make the tower wider and stiffer.</p>
+    <p><b>Stability.</b> The tower behaves like a simple real structure, and there's more than one way to make it stand:</p>
+    <ul>
+      <li><b>Where the cubes are, not how many.</b> A floor's stiffness comes from cubes far from its middle, like the frame of a tube skyscraper, so a hollow ring can be as strong as a solid block.</li>
+      <li><b>Connections in 3D.</b> A cube is braced by the cubes beside it, directly above and below it, and diagonally above and below it. An open frame that's well connected vertically is stiff even if it's mostly empty.</li>
+      <li><b>Tapering.</b> A tower that narrows evenly as it rises sways up to 35% less: less wind up high, and the weight sits low.</li>
+      <li><b>Setbacks and podiums.</b> Where a floor steps in sharply, the part above bends from that point, like a tower standing on a podium, so a slim tower on a wide base can stand.</li>
+      <li><b>Cores.</b> Cubes on an unbroken column from the ground sway 40% less, so a few strong spines can hold up a light tower.</li>
+      <li><b>Gaps let wind through.</b> An open floor catches as little as a fifth of the wind of a solid one.</li>
+      <li><b>Weight above, weakness below.</b> Each floor carries the wind on everything above it, so top-heavy towers and thin necks are weak, and a cube with nothing directly beneath it is 30% weaker.</li>
+      <li><b>Erosion and wear.</b> When edge cubes snap, the ones behind them are exposed next. Cubes pushed close to their limit (85%) by repeated gusts slowly weaken.</li>
+    </ul>
+    <p>The <b>Stability</b> meter rates the top of your tower: <b>Solid</b> (holds its height even in the strongest gusts, and never wears out), <b>Steady</b> (only the strongest gusts cost it levels) or <b>Shaky</b> (even mild gusts do), and names the shape it sees: tapered, setback, tube, lattice, spine or top-heavy. A number like <b>−4</b> means a gust would erode about 4 levels off the top, so build that much above the target or make the tower wider and stiffer.</p>
 
     <h3>Earthquakes</h3>
     <p>About a third of events are earthquakes instead of gusts. The ground shakes for a couple of seconds, and each floor has to carry the sideways pull of every cube above it. Stiff towers pick up more of the shaking than flexible ones, as real buildings do, so the dense, wide towers that shrug off wind are the ones quakes hurt. An overloaded floor loses its most exposed cubes, and anything they held up comes down too. Turn quakes off under <b>Challenge</b> if you want wind only.</p>
@@ -307,7 +317,7 @@
     <p>Efficiency = 100% − half the waste − half the over-building. <b>A</b> ≥ 80%, <b>B</b> ≥ 65%, <b>C</b> ≥ 50%, <b>D</b> ≥ 35%, otherwise <b>E</b>. So a solid tower grown with rules that waste little can grade A on a windy site and badly on a quake-prone one, and a lacy tower that drops most of its cubes while growing isn't efficient anywhere. The meter waits until the tower is at least 6 levels and a quarter of the target tall, and the grade says <b>so far</b> until you reach the target. Tap or hover over it to see the breakdown.</p>
 
     <h3>Scoring</h3>
-    <p><b>To win:</b> reach the target height with a settled build, with an efficiency grade at least as good as the site needs. About 3 seconds after the build settles the tower is checked: if it's still at the target and lean enough, you win. It also has to have survived at least <b>2 gusts or quakes</b> during the game, so if you get there very fast, it waits for them. Gusts and quakes keep hitting it between builds, so it has to survive them on the way up. If it's tall enough but the grade is short, add lean levels with <b>Build further</b> or start again with sparser rules.</p>
+    <p><b>To win:</b> reach the target height with a settled build, with an efficiency grade at least as good as the site needs. About 3 seconds after the build settles the tower is checked: if it's still at the target and lean enough, you win. It also has to have survived at least <b>3 gusts or quakes</b> during the game, so if you get there very fast, it waits for them. Gusts and quakes keep hitting it between builds, so it has to survive them on the way up. If it's tall enough but the grade is short, add lean levels with <b>Build further</b> or start again with sparser rules.</p>
     <p>Points come from your moves and from winning. Materials and losses take them away, and the score can go below 0:</p>
     <ul>
       <li><b>−½ per cube</b> a build places (materials), charged when the build settles. On plots bigger than 10 × 10 this and the loss penalty shrink in proportion, so big sites aren't punished more.</li>
@@ -427,16 +437,20 @@ const VIS_MAX = 0.3;
 const BRACE_MIN = 0.03;         // the stiffest tower still sways this much, relative to a lone column
 const BRACE_MAX = 1.6;          // a top-heavy or necked tower can sway up to this much more
 const BRACE_EXP = 0.25;         // how strongly the tower's geometry changes its sway (0 = not at all)
-const POROUS_MIN = 0.4;         // wind load of a floor that is mostly gaps, relative to a solid one
-const SPINE_FACTOR = 0.75;      // cubes on an unbroken column from the ground sway this much less
+const POROUS_MIN = 0.2;         // wind load of a floor that is mostly gaps, relative to a solid one
+const SPINE_FACTOR = 0.6;       // cubes on an unbroken column from the ground sway this much less
 const OVERHANG_STRENGTH = 0.7;  // strength of a cube with nothing directly under it
-const FATIGUE_START = 0.6;      // a cube pushed past this share of its strength starts to weaken
+const FATIGUE_START = 0.85;     // a cube pushed past this share of its strength starts to weaken
 const FATIGUE_RATE = 0.004;     // weakening per wind check while it is stressed (about 10 checks a second)
 const FATIGUE_MAX = 0.5;        // a cube never loses more than half its strength
 // Stability rating: SOLID loses nothing in a strong gust, STEADY only loses levels in a strong gust,
 // SHAKY already loses levels in a mild one.
 const MILD_GUST = 1.5, STRONG_GUST = 3;     // wind multipliers used for the prediction
-const BRACE_BELOW = 1, BRACE_ABOVE = 0;     // a cube resting on / held down by another counts as this many neighbours
+const BRACE_BELOW = 1, BRACE_ABOVE = 0.5;   // a cube resting on / held down by another counts as this many neighbours
+const BRACE_DIAG_BELOW = 0.12, BRACE_DIAG_ABOVE = 0.06;   // each cube diagonally below / above adds this much bracing
+const TAPER_BONUS = 0.35;    // a tower that tapers evenly sways up to this much less
+const SETBACK_RATIO = 0.6;   // a floor smaller than this share of the floor below it is a setback: the part above stands on a podium
+const PODIUM_CARRY = 0.35;   // share of the podium's own height that still adds to the bending of the tower on top
 function visSway(s, thr) { const v = (s / thr) * VIS_MAX; return v > VIS_MAX ? VIS_MAX : v < -VIS_MAX ? -VIS_MAX : v; }
 
 function swayFactorFor(n) { let f = 1.0 - n * 0.12; return f < 0.1 ? 0.1 : f; }
@@ -595,7 +609,9 @@ class CAGrid {
   windLoad(z) {
     const h = Math.max(1, z + 1);
     const push = Math.pow(h / WIND_REF_HEIGHT, WIND_EXP);
-    const bend = Math.sqrt(h);
+    // bending: measured from the last setback, plus part of the podium's own height below it
+    const sh = this.shoulder && z < this.shoulder.length ? this.shoulder[z] : 0;
+    const bend = Math.sqrt(Math.max(1, z - sh + 1) + PODIUM_CARRY * sh);
     const b = this.brace && z < this.brace.length ? this.brace[z] : 1;
     return push * bend * b;
   }
@@ -657,9 +673,25 @@ class CAGrid {
       return out;
     };
     const dT = drift(load, stiff), dRef = drift(refLoad, new Array(top + 1).fill(1));
+    // Taper: how much the tower narrows from its lower third to its upper third, and how evenly
+    // (the share of floors that are no bigger than the floor below). An even taper sways up to TAPER_BONUS less.
+    const thirdT = Math.max(1, Math.floor((top + 1) / 3));
+    const avgT = (a, b) => { let t = 0, c = 0; for (let z = a; z < b; z++) { t += nOf[z]; c++; } return c ? t / c : 0; };
+    const lowT = avgT(0, thirdT), highT = avgT(top + 1 - thirdT, top + 1);
+    let even = 0, pairs = 0;
+    for (let z = 1; z <= top; z++) if (nOf[z - 1] > 0) { pairs++; if (nOf[z] <= nOf[z - 1] * 1.05) even++; }
+    const narrowing = top >= 6 && lowT > 0 ? Math.max(0, Math.min(1, (1 - highT / lowT) / 0.6)) : 0;
+    this.taper = narrowing * (pairs ? even / pairs : 0);
+    const taperMul = 1 - TAPER_BONUS * this.taper;
+    // Setbacks: where a floor shrinks to less than SETBACK_RATIO of the floor below, the part above
+    // bends from there, like a tower standing on a podium (see windLoad)
+    const shoulder = new Array(top + 1).fill(0);
+    for (let z = 1; z <= top; z++)
+      shoulder[z] = nOf[z] > 0 && nOf[z - 1] > 0 && nOf[z] < SETBACK_RATIO * nOf[z - 1] ? z : shoulder[z - 1];
+    this.shoulder = shoulder;
     const brace = new Array(top + 1);
     for (let z = 0; z <= top; z++)
-      brace[z] = Math.min(BRACE_MAX, Math.max(BRACE_MIN, Math.pow(dRef[z] > 0 ? dT[z] / dRef[z] : 1, BRACE_EXP)));
+      brace[z] = Math.min(BRACE_MAX, Math.max(BRACE_MIN, Math.pow(dRef[z] > 0 ? dT[z] / dRef[z] : 1, BRACE_EXP) * taperMul));
     this.brace = brace;
 
     // Read-outs for the Stability meter
@@ -669,7 +701,8 @@ class CAGrid {
     const avgN = (a, b) => { let t = 0, c = 0; for (let z = a; z < b; z++) { t += nOf[z]; c++; } return c ? t / c : 0; };
     const low = avgN(0, third), high = avgN(top + 1 - third, top + 1);
     let spine = false; for (const h of runTop.values()) if (h >= 0.85 * (top + 1) && top >= 6) { spine = true; break; }
-    this.shape = top < 6 ? "" : high > 1.6 * low ? "top-heavy" : high < 0.6 * low ? "tapered"
+    const hasSetback = this.shoulder.some(z => z > 0);
+    this.shape = top < 6 ? "" : high > 1.6 * low ? "top-heavy" : this.taper > 0.3 || high < 0.6 * low ? "tapered" : hasSetback ? "setback"
       : floors && hollowSum / floors > 1.15 && this.fill < 0.7 ? "tube"
       : this.fill < 0.45 ? "lattice" : spine && this.fill < 0.65 ? "spine" : "";
     // Stability: predict how many levels a strong gust would strip off the top.
@@ -683,13 +716,8 @@ class CAGrid {
         const next = new Set();
         for (const k of S) {
           const x = KX(k), y = KY(k), z = KZ(k);
-          let n = 0;
-          for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) if ((dx || dy) && has(x + dx, y + dy, z)) n++;
           const below = z > 0 && has(x, y, z - 1);
-          n += (below ? BRACE_BELOW : 0) + (has(x, y, z + 1) ? BRACE_ABOVE : 0);
-          let ex = swayFactorFor(n);
-          const rt = this.runTop && this.runTop.get(K(x, y, 0));
-          if (rt && z < rt) ex *= SPINE_FACTOR;
+          const ex = this.exposureWith(has, x, y, z);
           let strength = WIND_THRESHOLD * (1 - (this.fatigue.get(k) || 0));
           if (z > 0 && !below) strength *= OVERHANG_STRENGTH;
           if (WIND_BASE * (this.windScale || 1) * mul * this.windLoad(z) * ex <= strength) next.add(k);
@@ -738,11 +766,21 @@ class CAGrid {
   }
 
   // How exposed a single cube is: fewer neighbours on its floor = more exposed. Cubes on a spine are anchored.
-  exposure(x, y, z) {
-    // A cube resting on another cube is braced by it, and one with a cube on top is held down,
-    // so they count as extra neighbours. That keeps open but well-connected lattices from being brittle.
-    const braced = (z > 0 && this.alive(x, y, z - 1) ? BRACE_BELOW : 0) + (this.alive(x, y, z + 1) ? BRACE_ABOVE : 0);
-    let f = swayFactorFor(this.neighbours(x, y, z) + braced);
+  exposure(x, y, z) { return this.exposureWith((a, b, c) => this.alive(a, b, c), x, y, z); }
+  // How exposed a cube is, counting its connections in 3D: neighbours on its own floor, the cubes directly
+  // below and above it, and the cubes diagonally below and above. So an open frame that is well connected
+  // vertically is stiff even if it's mostly empty. Cubes on an unbroken column from the ground (a core) are anchored.
+  exposureWith(has, x, y, z) {
+    let n = 0, diagBelow = 0, diagAbove = 0;
+    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+      if (!dx && !dy) continue;
+      if (has(x + dx, y + dy, z)) n++;
+      if (z > 0 && has(x + dx, y + dy, z - 1)) diagBelow++;
+      if (has(x + dx, y + dy, z + 1)) diagAbove++;
+    }
+    n += (z > 0 && has(x, y, z - 1) ? BRACE_BELOW : 0) + (has(x, y, z + 1) ? BRACE_ABOVE : 0)
+       + diagBelow * BRACE_DIAG_BELOW + diagAbove * BRACE_DIAG_ABOVE;
+    let f = swayFactorFor(n);
     const rt = this.runTop && this.runTop.get(K(x, y, 0));
     if (rt && z < rt) f *= SPINE_FACTOR;
     return f;
@@ -817,7 +855,7 @@ class CAGrid {
       const sway = windOffset * this.windLoad(c.z) * this.exposure(c.x, c.y, c.z);
       const strength = this.strengthOf(c.x, c.y, c.z, threshold), k = K(c.x, c.y, c.z);
       // Only exposed cubes wear out: a solid tower, or a cube boxed in on 6+ sides, doesn't fatigue.
-      const exposed = this.stability !== "solid" && this.neighbours(c.x, c.y, c.z) < 6;
+      const exposed = this.stability !== "solid";   // any cube can wear out, but only when it's pushed past FATIGUE_START of its strength
       if (exposed && Math.abs(sway) > FATIGUE_START * strength) this.fatigue.set(k, Math.min(FATIGUE_MAX, (this.fatigue.get(k) || 0) + FATIGUE_RATE));
       if (Math.abs(sway) > strength && !falling.has(c.x, c.y, c.z)) {
         this.fatigue.delete(k);
@@ -965,7 +1003,7 @@ const PHASE = { idle: 0, generate: 1, falling: 2, wind: 3 };
 // Challenge rules
 const SETTLE_CHECK = 30;     // a build that reaches the target is checked ~3 s later: still at the target and lean enough → win
 const MIN_RATE_LEVELS = 6;   // stability and efficiency are only shown once the tower is this tall (and a quarter of the target)
-const MIN_EVENTS = 2;        // gusts or quakes the tower must have survived during the game before it can win
+const MIN_EVENTS = 3;        // gusts or quakes the tower must have survived during the game before it can win
 const TARGET_BONUS = 500;    // first time a settled build reaches the target
 const CUBE_PENALTY = 3;      // points lost for every cube the wind or an earthquake knocks off
 // (on plots bigger than 10×10 both cube costs shrink in proportion, so big sites aren't punished more)
@@ -977,7 +1015,7 @@ const MATERIAL_COST = 0.5;    // points per cube a build places, charged when th
 const QUAKE_CHANCE = 0.35;           // share of events that are earthquakes
 const QUAKE_TICKS = 24;              // how long the shaking lasts (about 2.4 s)
 const QUAKE_MIN = 0.6, QUAKE_MAX = 1.2;
-const QUAKE_CAPACITY = 130;          // shaking one cube of a floor can carry, per cube above it
+const QUAKE_CAPACITY = 108;          // shaking one cube of a floor can carry, per cube above it
 const QUAKE_FLEX = 0.15;             // stiffness response: shaking × 1 / (QUAKE_FLEX + brace at the top)
 // Efficiency: how well the material is used FOR THIS SITE, from two parts:
 //   waste      = share of all cubes placed that are no longer standing (collapsed after a build, blown off, shaken loose)
@@ -992,7 +1030,7 @@ const gradeRank = g => "ABCDE".indexOf(g);
 const WIN_BONUS = 2000;      // for reaching the target at the site's grade
 const PAR_BONUS = 1000;      // per move under the benchmark, added when you win
 // Wind
-const WIND_BASE = 1.1;          // calm-day wind strength
+const WIND_BASE = 1.4;          // calm-day wind strength
 const WIND_THRESHOLD = 1.2;     // how far a cube can be pushed before it snaps off
 const WIND_EXP = 0.4;           // wind push grows with height^WIND_EXP (real wind: about 0.3–0.6)
 const WIND_REF_HEIGHT = 5;      // the height at which the push is ×1
@@ -1313,7 +1351,7 @@ for (const [sec, list] of Object.entries(TOGGLES)) {
 const SITES = [
   // wind: multiplies the base wind · quake: share of events that are earthquakes · fill: the site's ideal fill
   // (how much of the plot's volume a well-judged tower should use) · grade: the efficiency grade needed to win
-  { name: "Town square", w: 12, l: 12, target: 36, grade: "B", wind: 1, quake: 0.2, fill: 0.35,
+  { name: "Town square", w: 12, l: 12, target: 36, grade: "B", wind: 0.85, quake: 0.2, fill: 0.35,
     note: "A roomy square plot with ordinary wind and the odd quake. Ideal fill 35%: a light tower that wastes little does best." },
   { name: "Corner plot", w: 10, l: 10, target: 30, grade: "C", wind: 1, quake: 0.35, fill: 0.45,
     note: "A smaller plot and a lower target. The easiest site to start on." },
@@ -1321,11 +1359,11 @@ const SITES = [
     note: "Strong sea wind and no earthquakes. Ideal fill 85%: a thick, solid tower is efficient here, as long as little of it falls away." },
   { name: "Hilltop mast", w: 10, l: 10, target: 30, grade: "C", wind: 1.45, quake: 0, fill: 0.9,
     note: "Brutal wind and no quakes. Only stiff, dense towers survive, and a solid one counts as efficient here." },
-  { name: "Terrace infill", w: 16, l: 7, target: 28, grade: "C", wind: 1, quake: 0.35, fill: 0.45,
+  { name: "Terrace infill", w: 16, l: 7, target: 28, grade: "B", wind: 1, quake: 0.35, fill: 0.45,
     note: "Long and narrow, with only 7 cubes across the wind." },
-  { name: "Needle site", w: 9, l: 9, target: 40, grade: "C", wind: 0.9, quake: 0.35, fill: 0.5,
+  { name: "Needle site", w: 9, l: 9, target: 40, grade: "B", wind: 0.9, quake: 0.35, fill: 0.5,
     note: "A tight footprint and a tall target. Stiffness is everything." },
-  { name: "Fault line", w: 14, l: 14, target: 30, grade: "C", wind: 0.7, quake: 0.75, fill: 0.3,
+  { name: "Fault line", w: 14, l: 14, target: 30, grade: "B", wind: 0.7, quake: 0.75, fill: 0.3,
     note: "Light wind but frequent earthquakes. Ideal fill 30%: heavy, stiff towers shake apart, so build light and flexible." },
   { name: "Open plaza", w: 18, l: 18, target: 36, grade: "B", wind: 0.9, quake: 0.3, fill: 0.3,
     note: "Space to spread out, but a big tower is heavy, so quakes hit it hard. Ideal fill 30%." },
