@@ -159,6 +159,7 @@
       <button id="btnSeed">Random seed</button>
     </div>
     <p class="hint">Pick the grid and rules, then press New game. The wind starts once the tower settles.</p>
+    <p class="hint" id="newGameHint" style="display:none; color: var(--falling); margin-top: 10px">You've changed the site, plot or target. Build further keeps building the current tower; press <b>New game</b> to start on the new one.</p>
     <section id="secContinue" style="margin-top:12px">
       <p class="hint" style="margin:0 0 10px">While the wind is blowing, add more levels on top. The starting level jumps to the top of the tower each time it settles.</p>
     </section>
@@ -322,7 +323,7 @@
     <ul>
       <li>Dense, wide towers resist wind but cost a lot of material, grade badly and suffer in quakes. Lean, well-connected towers (tubes, lattices, spines) are the way to an A.</li>
       <li>When the tower is unstable it visibly rocks: the shakier the rating, the bigger the sway.</li>
-      <li><b>Build further</b> only works during the Wind phase. It reseeds the chosen level and adds <b>Levels</b> more on top.</li>
+      <li><b>Build further</b> only works during the Wind phase. It replaces the chosen level with a fresh floor seeded at your current <b>Density</b> and <b>Seed</b> (only where something below holds it up), then grows <b>Levels per build</b> more on top with your current growth rules. So you can change the sliders between builds, for example a dense base with a lighter top.</li>
       <li>With <b>Build on rubble</b> on, the tower can spread onto the rubble around its base and brace itself.</li>
       <li><b>Clear rubble</b> takes away that support, and anything resting on it falls.</li>
     </ul>
@@ -846,12 +847,27 @@ class CAGrid {
     return anyFell;
   }
 
+  // Build further: the starting level becomes a fresh floor seeded at the CURRENT density and seed, so changing
+  // the sliders between builds really changes what grows next. Cubes only go where something holds them up
+  // (a cube or rubble below, or the ground); everything above this level is cleared for the new growth.
   reseedLevel(z, seed, density, rubble, useRubble) {
     const rnd = makeRandom(seed);
+    for (const [k, v] of this.cells) if (v === true && KZ(k) > z) this.set(KX(k), KY(k), KZ(k), false);
     for (let x = 0; x < this.Width; x++) for (let y = 0; y < this.Length; y++) {
       this.ensure(x, y, z);
-      if (this.alive(x, y, z)) continue;
-      if (rnd.nextDouble() < density) this.set(x, y, z, true);
+      const held = z === 0 || this.alive(x, y, z - 1) || rubble.has(x, y, z - 1);
+      this.set(x, y, z, held && rnd.nextDouble() < density);
+    }
+    if (z > 0) {   // never leave the new floor empty: keep at least the cube over the most central support
+      let any = false;
+      for (let x = 0; x < this.Width && !any; x++) for (let y = 0; y < this.Length && !any; y++) any = this.alive(x, y, z);
+      if (!any) {
+        let best = null, bd = Infinity;
+        const cx = (this.Width - 1) / 2, cy = (this.Length - 1) / 2;
+        for (let x = 0; x < this.Width; x++) for (let y = 0; y < this.Length; y++)
+          if (this.alive(x, y, z - 1)) { const d = (x - cx) ** 2 + (y - cy) ** 2; if (d < bd) { bd = d; best = [x, y]; } }
+        if (best) this.set(best[0], best[1], z, true);
+      }
     }
     if (useRubble) {
       const surface = new Map();
@@ -1190,6 +1206,7 @@ class Simulation {
         const cost = Math.round((this.placed - this.charged) * MATERIAL_COST * Math.min(1, 100 / (p.width * p.length))); this.charged = this.placed;
         this.score += pts + bonus - cost;
         this.events.push({ type: "move", gained, pts, bonus, cost, height: h, holding: this.holding });
+        this.justBuilt = true;
       }
       this.events.push({ type: "settled" });
     }
@@ -1739,9 +1756,14 @@ function loop() {
       else toast("gust", `${sign}${Math.abs(net).toLocaleString()}<small>no new height (best ${sim.bestHeight})${mat}</small>`, 1800);
     }
     else if (ev.type === "settled") {
+      // After one of your builds settles, Build further starts from the new top. After a gust or quake only
+      // knocks cubes off, keep the level you picked, unless the tower is now shorter than it.
       const top = Math.max(0, sim.height - 1);
       inputs.continueFromLevel.max = Math.max(60, top);
-      inputs.continueFromLevel.value = top; inputs.continueFromLevel._show();
+      if (sim.justBuilt || +inputs.continueFromLevel.value > top) {
+        inputs.continueFromLevel.value = top; inputs.continueFromLevel._show();
+      }
+      sim.justBuilt = false;
     }
   }
   sim.events.length = 0;
@@ -1817,6 +1839,7 @@ function loop() {
   $("windBar").style.width = `${((sim.windMul - 1) / (WIND_CAP - 1)) * 100}%`;
 
   btnContinue.disabled = !(sim.grid && sim.phase === PHASE.wind);
+  $("newGameHint").style.display = sim.grid && (p.width !== sim.grid.Width || p.length !== sim.grid.Length || p.target !== sim.target) ? "" : "none";
   const delay = out ? out.sleep / +inputs.speed.value : 60;
   setTimeout(loop, Math.max(16, delay));
 }
