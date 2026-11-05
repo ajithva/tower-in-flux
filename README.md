@@ -33,7 +33,7 @@ The wind gets stronger with height (its push grows with height^0.4, as real wind
 
 - **Sites** fix the plot (drawn as a dashed red line on the ground), the target height, the hazards and the efficiency grade you need to win. The tower can't grow past the plot boundary.
 
-  | Site | Plot | Target | Wind | Quakes | Ideal fill | Grade needed |
+  | Site | Plot | Target | Wind | Quakes | Ideal fill (band ±10%) | Grade needed |
   |---|---|---|---|---|---|---|
   | Town square | 12×12 | 36 | ×0.85 | 20% | 35% | B |
   | Corner plot | 10×10 | 30 | ×1 | 35% | 45% | C |
@@ -45,7 +45,14 @@ The wind gets stronger with height (its push grows with height^0.4, as real wind
   | Open plaza | 18×18 | 36 | ×0.9 | 30% | 30% | B |
   | Custom | sliders | slider | ×1 | 35% | 45% | C |
 
-- **Efficiency** is how well the material is used for that site: 100% − ½ × waste − ½ × over-building. *Waste* is the share of all cubes placed that are no longer standing (collapsed after a build, blown off, shaken loose). *Over-building* is how far the tower's fill (cubes ÷ height × plot area) goes past the site's ideal fill. A ≥ 80%, B ≥ 65%, C ≥ 50%, D ≥ 35%, else E. A win needs the site's grade and adds +1,500 / 1,000 / 500 for A / B / C. So a solid tower that wastes little is efficient on the windy Harbour wall, and over-built on the quake-prone Fault line.
+- **Efficiency** judges the tower as it stands (plus recent waste), so it can always improve, and rewards judgement and form, not just less material:
+  - **Fit (30%)** — how close the fill (cubes ÷ height × plot area) is to the site's ideal band (ideal fill ± 10%); too heavy and too flimsy both lose.
+  - **Load paths (20%)** — share of cubes on an unbroken column to the ground (bridging cubes count half).
+  - **Strength (20%)** — share of the height a strong (×3) gust leaves standing, lightened by how little material is used.
+  - **Waste (15%)** — recent waste as an exponential moving average: each build counts half, older builds fade by half.
+  - **Form (15%)** — a structural form you built (taper, setback, tube, lattice, core) that is holding; hybrids built by changing rules between builds score full marks.
+  - Building more than 20% past the target costs up to 25%.
+  - A ≥ 80%, B ≥ 65%, C ≥ 50%, D ≥ 35%, else E. A win needs the site's grade and adds +1,500 / 1,000 / 500 for A / B / C. The meter shows the five parts, and the win screen shows a report.
 - **Earthquakes** replace a share of the gusts (set by the site). Each floor carries the sideways pull of the cubes above it, and stiff towers pick up more of the shaking, so dense towers that resist wind suffer most.
 - **Visible sway:** unstable towers rock as a whole in the wind (Shaky the most), and quakes shake them.
 - **Winning:** a settled build reaches the target at the site's grade, is still standing about 3 seconds later, and the tower has survived at least 3 gusts or quakes during the game.
